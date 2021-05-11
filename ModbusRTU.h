@@ -69,7 +69,7 @@
 #define MB_BYTE_ORDER_DCBA			(2)
 #define MB_BYTE_ORDER_BADC			(3)
 #define LONG_OFFSET					(4)
-#define NULL_PTR					((int*)0)
+//#define NULL_PTR					((int*)0)
 //#define MB_BYTE_ORDER_LONGINT		(4)
 
 /*============================================================================*/

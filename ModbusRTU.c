@@ -1,4 +1,4 @@
-///*------------------------------------------------------------------------
+/*------------------------------------------------------------------------
 * This Information is proprietary to Phase Dynamics Inc, Richardson, Texas
 * and MAY NOT be copied by any method or incorporated into another program
 * without the express written consent of Phase Dynamics Inc. This information
@@ -29,9 +29,9 @@
 *------------------------------------------------------------------------*/
 
 #include "pinmux.h"
-//#include <ti/csl/src/ip/syscfg/V0/V0_0/syscfg_tokens.h>
-#include <ti/csl/src/ip/syscfg/V0/V0_1/syscfg_tokens.h>
 #include <ti/csl/cslr_syscfg.h>
+#include <ti/csl/src/ip/syscfg/V0/V0_0/syscfg_tokens.h>
+#include <ti/csl/src/ip/syscfg/V0/V0_1/syscfg_tokens.h>
 #include <ti/csl/src/ip/syscfg/V0/cslr_syscfg.h>
 #include "Globals.h"
 #include "ModbusTables.h"
@@ -210,29 +210,37 @@ Init_PinMux(void)
 	/////////////////////////// 
 
 	// configure GP0[9] as output
-	CSL_FINS(gpioRegs->BANK_REGISTERS[0].DIR,GPIO_DIR_DIR9,CSL_GPIO_DIR_DIR_OUT);
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[0].DIR,GPIO_DIR_DIR9,CSL_GPIO_DIR_DIR_OUT);
+	gpioRegs->BANK_REGISTERS[0].DIR &= ~(1 << 9);
 
 	// configure GP0[7] as output
-	CSL_FINS(gpioRegs->BANK_REGISTERS[0].DIR,GPIO_DIR_DIR7,CSL_GPIO_DIR_DIR_OUT);
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[0].DIR,GPIO_DIR_DIR7,CSL_GPIO_DIR_DIR_OUT);
+	gpioRegs->BANK_REGISTERS[0].DIR &= ~(1 << 7);
 
 	// configure GP6[1] as output
-	CSL_FINS(gpioRegs->BANK_REGISTERS[3].DIR,GPIO_DIR_DIR1,CSL_GPIO_DIR_DIR_OUT);
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[3].DIR,GPIO_DIR_DIR1,CSL_GPIO_DIR_DIR_OUT);
+	gpioRegs->BANK_REGISTERS[3].DIR &= ~(1 << 1);
 
 	// configure GP6[0] as input
-	CSL_FINS(gpioRegs->BANK_REGISTERS[3].DIR,GPIO_DIR_DIR0,CSL_GPIO_DIR_DIR_IN);
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[3].DIR,GPIO_DIR_DIR0,CSL_GPIO_DIR_DIR_IN);
+	gpioRegs->BANK_REGISTERS[3].DIR |= 1 << 0;
 
 	// configure GP2[5] as output for relay
-	CSL_FINS(gpioRegs->BANK_REGISTERS[1].DIR,GPIO_DIR_DIR5,CSL_GPIO_DIR_DIR_OUT);
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[1].DIR,GPIO_DIR_DIR5,CSL_GPIO_DIR_DIR_OUT);
+	gpioRegs->BANK_REGISTERS[1].DIR &= ~(1 << 5);
 	
 	// configure GP8[12] as input for LCD input
-	CSL_FINS(gpioRegs->BANK_REGISTERS[4].DIR,GPIO_DIR_DIR12,CSL_GPIO_DIR_DIR_IN);
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[4].DIR,GPIO_DIR_DIR12,CSL_GPIO_DIR_DIR_IN);
+	gpioRegs->BANK_REGISTERS[4].DIR |= 1 << 12;
 
 	/////////////////////////// 
 	// ASSIGN INITIAL VALUE
 	/////////////////////////// 
 
-	CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA, GPIO_OUT_DATA_OUT9,0);
-	CSL_FINS(gpioRegs->BANK_REGISTERS[1].OUT_DATA, GPIO_OUT_DATA_OUT5,0);
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA, GPIO_OUT_DATA_OUT9,0);
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[1].OUT_DATA, GPIO_OUT_DATA_OUT5,0);
+	gpioRegs->BANK_REGISTERS[0].OUT_DATA &= ~(1 << 9);
+	gpioRegs->BANK_REGISTERS[1].OUT_DATA &= ~(1 << 5);
 }
 
 

@@ -46,8 +46,6 @@
 
 #define BOOL Uint8
 #define DEMO_MODE
-#define SOC_OMAPL138
-
 
 #include <stdio.h>
 #include <string.h>
