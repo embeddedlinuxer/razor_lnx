@@ -30,6 +30,8 @@
 
 #include "pinmux.h"
 #include <ti/csl/cslr_syscfg.h>
+#include <ti/csl/src/ip/uart/V0/cslr_uart.h>
+#include <ti/csl/src/ip/uart/V0/uart.h>
 #include <ti/csl/src/ip/syscfg/V0/V0_0/syscfg_tokens.h>
 #include <ti/csl/src/ip/syscfg/V0/V0_1/syscfg_tokens.h>
 #include <ti/csl/src/ip/syscfg/V0/cslr_syscfg.h>
@@ -243,7 +245,6 @@ Init_PinMux(void)
 	gpioRegs->BANK_REGISTERS[1].OUT_DATA &= ~(1 << 5);
 }
 
-
 void 
 Config_Uart(Uint32 baudrate, Uint8 parity)
 {
@@ -256,7 +257,8 @@ Config_Uart(Uint32 baudrate, Uint8 parity)
 	CSL_FINST(uartRegs->PWREMU_MGMT,UART_PWREMU_MGMT_UTRST,RESET);
 	CSL_FINST(uartRegs->PWREMU_MGMT,UART_PWREMU_MGMT_URRST,RESET);
 
-	uartRegs->LCR = CSL_FMKT(UART_LCR_WLS,8BITS); 		//word length 8bits
+	//uartRegs->LCR = CSL_FMKT(UART_LCR_WLS,8BITS); 		//word length 8bits
+	uartRegs->LCR |= CSL_UART_LCR_WLS__8BITS;
 
 	//modem control register
 	uartRegs->MCR = CSL_FMKT(UART_MCR_RTS,ENABLE)  		//RTS control
@@ -351,7 +353,6 @@ Config_Uart(Uint32 baudrate, Uint8 parity)
 	CSL_FINS(uartRegs->DLL,UART_DLL_DLL,divisor & 0xFF);	// LSB
 	CSL_FINS(uartRegs->DLH,UART_DLH_DLH,divisor >> 8);	// MSB
 
-
 	switch(parity){
 			case UART_PARITY_EVEN:
 				CSL_FINST(uartRegs->LCR,UART_LCR_PEN,ENABLE);	//parity enable
@@ -399,13 +400,13 @@ Config_Uart(Uint32 baudrate, Uint8 parity)
 
 void 
 Init_Uart(void)
-{ ///note: DEVKIT uses UART2
+{ 
+	//disable transmitter and receiver
+  	CSL_FINST(uartRegs->PWREMU_MGMT,UART_PWREMU_MGMT_UTRST,RESET);
+  	CSL_FINST(uartRegs->PWREMU_MGMT,UART_PWREMU_MGMT_URRST,RESET);
 
-//disable transmitter and receiver
-  CSL_FINST(uartRegs->PWREMU_MGMT,UART_PWREMU_MGMT_UTRST,RESET);
-  CSL_FINST(uartRegs->PWREMU_MGMT,UART_PWREMU_MGMT_URRST,RESET);
-
-  uartRegs->LCR = CSL_FMKT(UART_LCR_WLS,8BITS); 			//word length 8bits
+  	//uartRegs->LCR = CSL_FMKT(UART_LCR_WLS,8BITS); 			//word length 8bits
+	uartRegs->LCR |= CSL_UART_LCR_WLS__8BITS;
 
   //modem control register
   uartRegs->MCR = CSL_FMKT(UART_MCR_RTS,ENABLE)  			//RTS control
@@ -555,7 +556,8 @@ Uart_ISR(void)
 		//read LSR for empty TX EMPTY status
 		if ( (CSL_FEXT(uartRegs->LSR,UART_LSR_TEMT) == 1) && (UART_TXBUF.n > 0) )
 		{
-			CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA,GPIO_OUT_DATA_OUT9,1);
+			//CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA,GPIO_OUT_DATA_OUT9,1);
+			gpioRegs->BANK_REGISTERS[0].OUT_DATA |= (1 << 9);
 			for (i=0;i<UART_FIFO_SIZE-1;i++)
 			{
 				if (UART_TXBUF.n > 0) //transfer from SW TX buffer to HW TX FIFO
@@ -571,7 +573,8 @@ Uart_ISR(void)
 
 		if ( (CSL_FEXT(uartRegs->LSR,UART_LSR_TEMT) == 1) && (UART_TXBUF.n <= 0) )
 		{
-			CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA,GPIO_OUT_DATA_OUT9,0);
+			//CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA,GPIO_OUT_DATA_OUT9,0);
+			gpioRegs->BANK_REGISTERS[0].OUT_DATA &= ~(1 << 9);
 		}
 
 		switch(INTstatus)
@@ -650,7 +653,8 @@ Uart_ISR(void)
 
 	if ( (CSL_FEXT(uartRegs->LSR,UART_LSR_TEMT) == 1) && (UART_TXBUF.n <= 0) )
 	{
-		CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA,GPIO_OUT_DATA_OUT9,0);
+		//CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA,GPIO_OUT_DATA_OUT9,0);
+		gpioRegs->BANK_REGISTERS[0].OUT_DATA &= ~(1 << 9);
 	}
 
 	if (swi_post_needed)
@@ -1104,7 +1108,7 @@ Modbus_RX(void)
 
 		case 0x10: //write to floating point OR multiple holding registers
 				   //(note: 40000 offset makes this an integer value)
-			num_data_bytes = uart_pkt_ptr[6];
+			num_data_bytes = uart_pkt_ptr[6+la_offset]; /// DKOH
 			msg_num_bytes = 7 + num_data_bytes; // number of bytes in query (not counting CRC)
 
 			if(UART_RXBUF.n < msg_num_bytes + 2 + la_offset) // CRC -> add 2 bytes
@@ -2715,7 +2719,8 @@ MB_PacketDone(void)
 	if ( (CSL_FEXT(uartRegs->LSR,UART_LSR_TEMT) == 1) )
 	{
 		MB_TX_IN_PROGRESS = FALSE;
-		CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA,GPIO_OUT_DATA_OUT9,0);
+		//CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA,GPIO_OUT_DATA_OUT9,0);
+		gpioRegs->BANK_REGISTERS[0].OUT_DATA &= ~(1 << 9);
 	}
 	else  //if not, keep checking until it is
 		Clock_start(MB_End_Clock);

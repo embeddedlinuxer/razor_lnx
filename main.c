@@ -123,8 +123,9 @@ static inline void Init_All(void)
 	Init_Counter_3();
 
     // CONFIGURE UART BAUDRATE & PARITY OPTIONS
-	Config_Uart(REG_BAUD_RATE.calc_val,UART_PARITY_NONE);
-
+	//Config_Uart(REG_BAUD_RATE.calc_val,UART_PARITY_NONE);
+	UARTConfigInit(uartRegs,REG_BAUD_RATE.calc_val, UART_WORD_LENGTH_8, UART_STOP_BIT_1, UART_NO_PARITY,UART_16x_MODE);
+                    
 	// Initialize software objects
 	initSoftwareObjects();
 
