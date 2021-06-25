@@ -3288,7 +3288,7 @@ fxnSecurityInfo_MC(const Uint16 input)
             lcdModelCode[i*4+1] = (REG_MODEL_CODE[i] >> 8)  & 0xFF;
             lcdModelCode[i*4+0] = (REG_MODEL_CODE[i] >> 0)  & 0xFF;
         }
-       
+      
         sprintf(lcdLine1,"%16s",lcdModelCode);
         updateDisplay(SECURITYINFO_INFO_MC, lcdLine1);
 	}

@@ -40,13 +40,18 @@
 //////////////////////////////////////////////////////////////////////////
 
 #undef MENU_H
-#include "Globals.h"
-#include "PDI_I2C.h"
-#include <assert.h>
-#include "Menu.h"
 #include <ti/csl/cslr_i2c.h>
 #include <ti/csl/cslr_gpio.h>
+#include <ti/csl/csl_gpioAux.h>
+#include <assert.h>
+#include "Globals.h"
+#include "PDI_I2C.h"
+#include "Menu.h"
 
+#define GPIO_DIR_OUTPUT	0
+#define GPIO_DIR_INPUT	1 
+#define I2C_CFG_CMD_REPEAT_MODE_ON  (CSL_I2C_ICMDR_RM_MASK)
+#define I2C_CFG_CMD_REPEAT_MODE_OFF (0U)
 #define I2C_DELAY_TIME  1000
 #define KEY             1
 #define NO_KEY          0
@@ -169,7 +174,7 @@ void Init_I2C(void)
 	}
 
 	// convince slave devices to let go
-	I2C_Recover(); 
+	//I2C_Recover(); 
 
 	// i2c mode register
 /*
@@ -264,7 +269,7 @@ void Reset_I2C(Uint8 isKey, Uint32 I2C_KEY)
 	for(i=0;i<MAX_BFR_SIZE;i++) I2C_RXBUF.buff[i] = 0xFF;
 
 	// convince slave devices to let go
-	I2C_Recover();	
+	//I2C_Recover();	
 
 	// i2c mode register
 	i2cRegs->ICMDR |= (CSL_I2C_ICMDR_MST_MASK | CSL_I2C_ICMDR_STT_MASK | CSL_I2C_ICMDR_TRX_MASK | CSL_I2C_ICMDR_RM_MASK); // byDKOH
@@ -308,6 +313,7 @@ void Reset_I2C(Uint8 isKey, Uint32 I2C_KEY)
 	Hwi_enableInterrupt(6);
 }
 
+/*
 //	This function changes the data and clock pin to GPIO and issues
 //	10 clock pulses to encourage slave devices to release the darn data line
 int I2C_Recover(void)
@@ -318,7 +324,7 @@ int I2C_Recover(void)
 	//CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_IRS,DISABLE);  //put i2c module in reset
 	i2cRegs->ICMDR &= ~CSL_I2C_ICMDR_IRS_MASK; // put the I2C module in reset. byDKOH
 
-	i2cRegs->ICPFUNC = CSL_FMKT(I2C_ICPFUNC_PFUNC0,ENABLE);	//set pins to function as GPIO instead of I2C
+	i2cRegs->ICPFUNC = CSL_FMKT(I2C_ICPFUNC_PFUNC0,ENABLE);	// set pins to function as GPIO instead of I2C
 	i2cRegs->ICPDIR = CSL_FMKT(I2C_ICPDIR_PDIR1,DISABLE);	// set SDA pin as input
 	i2cRegs->ICPDIR = CSL_FMKT(I2C_ICPDIR_PDIR0,ENABLE);	// set SCL pin as output
 
@@ -347,7 +353,7 @@ int I2C_Recover(void)
 	Swi_restore(swikey);
 	return 0;
 }
-
+*/
 /*********************************************************************************
  * init_LCD()	- Initialize the LCD
  ********************************************************************************/
@@ -358,7 +364,9 @@ void Init_LCD(void)
 			LCD_DISP_CLR,LCD_ENTRY_MODE,LCD_SET_DDRAM_ADDR};
 
 	// configure GPIO0_7 (GPIO0_7_PIN) as an output
-	CSL_FINS(gpioRegs->BANK_REGISTERS[4].DIR,GPIO_DIR_DIR7,0);
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[4].DIR,GPIO_DIR_DIR7,0);
+	/* Set pin direction as input*/
+    GPIODirModeSet(gpioRegs, 7, GPIO_DIR_OUTPUT); // DKOH
 
 	// turn on backlight
 	I2C_BACKLIGHT_EN = TRUE; 
@@ -386,7 +394,7 @@ void Init_MBVE(void)
 	I2C_BUTTON_VALUE = 0;
 	I2C_BUTTON_ENTER = 0;
 
-	I2C_START_CLR;
+	//I2C_START_CLR;
 	I2C_STOP_SET;
 
 	I2C_Wait_For_Stop();
@@ -394,7 +402,8 @@ void Init_MBVE(void)
 	i2cRegs->ICSAR 	= CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_MBVE); 	//Set Slave Address to 0x21
 	CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICXRDY,ENABLE); 	//unmask the ICRRDY interrupt
 
-	I2C_RM_OFF;
+	//I2C_RM_OFF;
+	I2CMasterControl(i2cRegs, I2C_CFG_CMD_REPEAT_MODE_OFF); // DKOH
 	I2C_STOP_SET;
 	I2C_MASTER_MODE;
 	I2C_CNT_2BYTE;
@@ -410,16 +419,27 @@ void Init_MBVE(void)
 	I2C_Wait_For_TXRDY();	//poll transmitter ready
 	CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,DISABLE); //mask the ICRRDY interrupt
 	i2cRegs->ICSAR = CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_XPANDR); 	//Set slave address to 0x20
-	CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,CLEAR); 		//clear stop bit;
-	I2C_RM_ON;	// enable repeated start mode
+	//CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,CLEAR); 		//clear stop bit;
+	//I2C_RM_ON;	// enable repeated start mode
 	//enable interrupts on GPIO banks 6 and 8
-	CSL_FINST(gpioRegs->BINTEN,GPIO_BINTEN_EN3,ENABLE); //added
-	CSL_FINST(gpioRegs->BINTEN,GPIO_BINTEN_EN8,ENABLE);
-	CSL_FINST(gpioRegs->BINTEN,GPIO_BINTEN_EN6,ENABLE);
-	CSL_FINS(gpioRegs->BANK_REGISTERS[2].SET_FAL_TRIG,GPIO_SET_FAL_TRIG_SETFAL1,1);
-	CSL_FINS(gpioRegs->BANK_REGISTERS[2].SET_RIS_TRIG,GPIO_SET_RIS_TRIG_SETRIS1,1);
-	CSL_FINS(gpioRegs->BANK_REGISTERS[1].SET_FAL_TRIG,GPIO_SET_FAL_TRIG_SETFAL29,1);
-	CSL_FINS(gpioRegs->BANK_REGISTERS[1].SET_RIS_TRIG,GPIO_SET_RIS_TRIG_SETRIS29,1);
+	//CSL_FINST(gpioRegs->BINTEN,GPIO_BINTEN_EN3,ENABLE); //added
+	//CSL_FINST(gpioRegs->BINTEN,GPIO_BINTEN_EN8,ENABLE);
+	//CSL_FINST(gpioRegs->BINTEN,GPIO_BINTEN_EN6,ENABLE);
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[2].SET_FAL_TRIG,GPIO_SET_FAL_TRIG_SETFAL1,1);
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[2].SET_RIS_TRIG,GPIO_SET_RIS_TRIG_SETRIS1,1);
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[1].SET_FAL_TRIG,GPIO_SET_FAL_TRIG_SETFAL29,1);
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[1].SET_RIS_TRIG,GPIO_SET_RIS_TRIG_SETRIS29,1);
+
+	I2CMasterControl(i2cRegs, I2C_CFG_CMD_REPEAT_MODE_ON); // DKOH
+
+	CSL_GPIO_bankInterruptEnable(gpioRegs,3); // DKOH
+	CSL_GPIO_bankInterruptEnable(gpioRegs,8); // DKOH
+	CSL_GPIO_bankInterruptEnable(gpioRegs,6); // DKOH
+
+	gpioRegs->BANK_REGISTERS[2].SET_FAL_TRIG |=  1 << 1; // DKOH
+	gpioRegs->BANK_REGISTERS[2].SET_RIS_TRIG |=  1 << 1; // DKOH
+	gpioRegs->BANK_REGISTERS[1].SET_FAL_TRIG |=  1 << 29; // DKOH
+	gpioRegs->BANK_REGISTERS[1].SET_RIS_TRIG |=  1 << 29; // DKOH
 }
 
 /***************************************************************************
@@ -626,6 +646,7 @@ static inline void Pulse_ePin_Manual(int read, int write, Uint8 lcd_data)
 
 	delayInt(0xFFFF);
 	I2C_Wait_For_TXRDY();	//poll transmitter ready
+
 	// E Pin Off
 	CSL_FINST(i2cRegs->ICSTR,I2C_ICSTR_BB,BUSY);		//set bus busy bit
 	i2cRegs->ICDXR = lcd_data;
@@ -717,7 +738,7 @@ void I2C_Start_Pulse_MBVE(void)
 		lsb = I2C_BUTTON_S;
 		msb = 0x00;
 
-		I2C_START_CLR;
+		//I2C_START_CLR;
 		I2C_STOP_SET;
 
         /// validate i2c lines
@@ -726,7 +747,8 @@ void I2C_Start_Pulse_MBVE(void)
 		i2cRegs->ICSAR 	= CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_MBVE); 	//Set Slave Address to 0x21
 		CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,ENABLE); 	//unmask the ICRRDY interrupt
 
-		I2C_RM_OFF;
+		//I2C_RM_OFF;
+		I2CMasterControl(i2cRegs, I2C_CFG_CMD_REPEAT_MODE_OFF); // DKOH
 		I2C_STOP_SET;
 		I2C_MASTER_MODE;
 		I2C_CNT_2BYTE;
@@ -744,8 +766,9 @@ void I2C_Start_Pulse_MBVE(void)
 
 		CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,DISABLE); //mask the ICRRDY interrupt
 		i2cRegs->ICSAR = CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_XPANDR); 	//Set slave address to 0x20
-		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,CLEAR); 		//clear stop bit;
-		I2C_RM_ON;	// enable repeated start mode
+		//CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,CLEAR); 		//clear stop bit;
+		//I2C_RM_ON;	// enable repeated start mode
+		I2CMasterControl(i2cRegs, I2C_CFG_CMD_REPEAT_MODE_ON); // DKOH
 
 		//read ICIVR until it's cleared of all flags
 		while(CSL_FEXT(i2cRegs->ICIVR, I2C_ICIVR_INTCODE) != CSL_I2C_ICIVR_INTCODE_NONE);
@@ -886,12 +909,13 @@ void I2C_Pulse_MBVE(void)
 
 	I2C_Wait_To_Send(); //finsh sending anything in the THR
 
-	I2C_START_CLR;
+	//I2C_START_CLR;
 	I2C_STOP_SET;
 	I2C_Wait_For_Stop();
 	i2cRegs->ICSAR 	= CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_MBVE); 	//Set Slave Address to 0x21
 	CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,ENABLE); 	//unmask the ICRRDY interrupt
-	I2C_RM_OFF;
+	//I2C_RM_OFF;
+	I2CMasterControl(i2cRegs, I2C_CFG_CMD_REPEAT_MODE_OFF); // DKOH
 	I2C_STOP_SET;
 	I2C_MASTER_MODE;
 	I2C_CNT_2BYTE;
@@ -912,7 +936,7 @@ void I2C_Pulse_MBVE(void)
 
 	CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,DISABLE); //mask the ICRRDY interrupt
 	i2cRegs->ICSAR = CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_XPANDR); 	//Set slave address to 0x20
-	CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,CLEAR); 		//clear stop bit;
+	//CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,CLEAR); 		//clear stop bit;
 	I2C_RM_ON;	// enable repeated start mode
 
 	//read ICIVR until it's cleared of all flags
@@ -1861,7 +1885,7 @@ void I2C_Update_AO(void)
     Uint16 ctrl_byte;
     Uint8 is_missing_DAC;
 
-    I2C_START_CLR;
+    //I2C_START_CLR;
     I2C_STOP_SET;
     I2C_Wait_For_Stop();
     key = Swi_disable();
@@ -1921,8 +1945,9 @@ void I2C_Update_AO(void)
     // write to DAC
     I2C_MASTER_MODE;
     CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,DISABLE); //mask the ICRRDY interrupt
-    I2C_START_CLR;
-    I2C_RM_OFF;
+    //I2C_START_CLR;
+    //I2C_RM_OFF;
+	I2CMasterControl(i2cRegs, I2C_CFG_CMD_REPEAT_MODE_OFF); // DKOH
     I2C_STOP_SET;
     I2C_CNT_3BYTE;
 
@@ -1966,7 +1991,7 @@ while(CSL_FEXT(i2cRegs->ICIVR, I2C_ICIVR_INTCODE) != CSL_I2C_ICIVR_INTCODE_NONE)
     }
 	else
 	{
-        I2C_START_CLR;
+        //I2C_START_CLR;
         I2C_STOP_SET;
         I2C_Wait_For_Stop();
 
@@ -1992,8 +2017,9 @@ while(CSL_FEXT(i2cRegs->ICIVR, I2C_ICIVR_INTCODE) != CSL_I2C_ICIVR_INTCODE_NONE)
     I2C_MASTER_MODE;
     CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,DISABLE); // mask the ICRRDY interrupt
     i2cRegs->ICSAR = CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_XPANDR); // set slave address to 0x20
-    CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,CLEAR); // clear stop bit;
-    I2C_RM_ON; // enable repeated start mode
+    //CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,CLEAR); // clear stop bit;
+    //I2C_RM_ON; // enable repeated start mode
+	I2CMasterControl(i2cRegs, I2C_CFG_CMD_REPEAT_MODE_ON); // DKOH
     Swi_restore(key);
 
     /// START NEXT I2C CLOCK
@@ -2150,14 +2176,14 @@ setLcdExpander(void)
 {
 	setTx();
 	i2cRegs->ICSAR = CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_XPANDR); 	//Set slave address to 0x20
-	CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,CLEAR); 		// clear stop bit;
+	//CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,CLEAR); 		// clear stop bit;
 }
 
 
 void
 setStop(void)
 {
-	I2C_START_CLR;
+	//I2C_START_CLR;
 	I2C_STOP_SET;
 	I2C_Wait_For_Stop();
 }
@@ -2175,15 +2201,17 @@ setTx(void)
 {
 	CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,DISABLE); //mask the ICRRDY interrupt
     	I2C_TX_MODE; // I2C in TX MODE
-	I2C_RM_ON;
+	//I2C_RM_ON;
+	I2CMasterControl(i2cRegs, I2C_CFG_CMD_REPEAT_MODE_ON); // DKOH
 	I2C_MASTER_MODE;
 }
 
 void
 setRx(void)
 {
-    	CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,ENABLE); // unmask the ICRRDY interrupt
+    CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,ENABLE); // unmask the ICRRDY interrupt
 	I2C_RX_MODE; // I2C in RX mode 
-	I2C_RM_OFF;
+	//I2C_RM_OFF;
+	I2CMasterControl(i2cRegs, I2C_CFG_CMD_REPEAT_MODE_OFF); // DKOH
 	I2C_MASTER_MODE;
 }
