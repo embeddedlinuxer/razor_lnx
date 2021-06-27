@@ -648,7 +648,8 @@ static inline void Pulse_ePin_Manual(int read, int write, Uint8 lcd_data)
 	I2C_Wait_For_TXRDY();	//poll transmitter ready
 
 	// E Pin Off
-	CSL_FINST(i2cRegs->ICSTR,I2C_ICSTR_BB,BUSY);		//set bus busy bit
+	//CSL_FINST(i2cRegs->ICSTR,I2C_ICSTR_BB,BUSY);		//set bus busy bit
+	i2cRegs->ICSTR |= CSL_I2C_ICSTR_BB_MASK; // DKOH
 	i2cRegs->ICDXR = lcd_data;
 	delayInt(0xFFFF);
 	I2C_Wait_For_TXRDY();	//poll transmitter ready
@@ -692,15 +693,20 @@ void I2C_LCD_ClockFxn(void)
 inline void DisableButtonInts(void)
 {
 	// clear fall/rise triggers GPIO3[13]
-	CSL_FINS(gpioRegs->BANK_REGISTERS[1].CLR_FAL_TRIG,GPIO_CLR_FAL_TRIG_CLRFAL29,1);
-	CSL_FINS(gpioRegs->BANK_REGISTERS[1].CLR_RIS_TRIG,GPIO_CLR_RIS_TRIG_CLRRIS29,1);
+//	CSL_FINS(gpioRegs->BANK_REGISTERS[1].CLR_FAL_TRIG,GPIO_CLR_FAL_TRIG_CLRFAL29,1);
+//	CSL_FINS(gpioRegs->BANK_REGISTERS[1].CLR_RIS_TRIG,GPIO_CLR_RIS_TRIG_CLRRIS29,1);
+
+	gpioRegs->BANK_REGISTERS[1].CLR_FAL_TRIG |=  1 << 29; // DKOH
+	gpioRegs->BANK_REGISTERS[1].CLR_RIS_TRIG |=  1 << 29; // DKOH
 }
 
 inline void EnableButtonInts(void)
 {
      // set fall/rise triggers GPIO3[13]
-     CSL_FINS(gpioRegs->BANK_REGISTERS[1].SET_FAL_TRIG,GPIO_SET_FAL_TRIG_SETFAL29,1);
-     CSL_FINS(gpioRegs->BANK_REGISTERS[1].SET_RIS_TRIG,GPIO_SET_RIS_TRIG_SETRIS29,1);
+//     CSL_FINS(gpioRegs->BANK_REGISTERS[1].SET_FAL_TRIG,GPIO_SET_FAL_TRIG_SETFAL29,1);
+//     CSL_FINS(gpioRegs->BANK_REGISTERS[1].SET_RIS_TRIG,GPIO_SET_RIS_TRIG_SETRIS29,1);
+	gpioRegs->BANK_REGISTERS[1].SET_FAL_TRIG |=  1 << 29; // DKOH
+	gpioRegs->BANK_REGISTERS[1].SET_RIS_TRIG |=  1 << 29; // DKOH
 }
 
 /***************************************************************************
@@ -807,7 +813,8 @@ void I2C_Pulse_MBVE(void)
 	i2cRegs->ICSAR = CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_MBVE); 	//Set Slave Address to 0x21
 
 	/// check to see if the button is being pressed ///a
-	button_pin = CSL_FEXT(gpioRegs->BANK_REGISTERS[3].IN_DATA,GPIO_IN_DATA_IN0);
+	//button_pin = CSL_FEXT(gpioRegs->BANK_REGISTERS[3].IN_DATA,GPIO_IN_DATA_IN0);
+	button_pin = CSL_FEXTR (gpioRegs->BANK_REGISTERS[3].IN_DATA,0,0);
 
 	// if a button is pressed
 	if ( button_pin != 0 ) //GPIO2[14] = SSPI_SCS[0] = CP[14] = bank0pin14
@@ -954,7 +961,9 @@ void I2C_Pulse_MBVE(void)
 void GPIO_INTpin_HwiFxn(void)
 {
 	// clear fall trigger GPIO8[12]
-	CSL_FINS(gpioRegs->BANK_REGISTERS[4].CLR_FAL_TRIG,GPIO_CLR_FAL_TRIG_CLRFAL12,1); //probably unnecessary
+	//CSL_FINS(gpioRegs->BANK_REGISTERS[4].CLR_FAL_TRIG,GPIO_CLR_FAL_TRIG_CLRFAL12,1); //probably unnecessary
+
+	gpioRegs->BANK_REGISTERS[4].CLR_FAL_TRIG |= 1 << 12; // DKOH
 
 	if (I2C_RX_BYTE_COUNT == 3) Swi_post(Swi_I2C_RX);
 }
@@ -970,8 +979,9 @@ void I2C_HwiFxn(void)
 
 	intcode = CSL_FEXT(i2cRegs->ICIVR, I2C_ICIVR_INTCODE);
 
-	//if ICXRDY caused the interrupt and the I2C THR is still ready
-	if( (intcode == CSL_I2C_ICIVR_INTCODE_ICXRDY) && (CSL_FEXT(i2cRegs->ICSTR,I2C_ICSTR_ICXRDY)))
+	// if ICXRDY caused the interrupt and the I2C THR is still ready
+	//if ((intcode == CSL_I2C_ICIVR_INTCODE_ICXRDY) && (CSL_FEXT(i2cRegs->ICSTR,I2C_ICSTR_ICXRDY)))
+	if ((intcode == CSL_I2C_ICIVR_INTCODE_TDR) && (CSL_FEXT(i2cRegs->ICSTR,I2C_ICSTR_ICXRDY))) // DKOH
 	{
 		if (I2C_TXBUF.n > 0) // if there is something to send
 		{
@@ -982,9 +992,6 @@ void I2C_HwiFxn(void)
 		//read ICIVR until it's cleared of all flags
 		while(CSL_FEXT(i2cRegs->ICIVR, I2C_ICIVR_INTCODE) != CSL_I2C_ICIVR_INTCODE_NONE);
 	}
-	//CSL_FEXT(i2cRegs->ICIVR, I2C_ICIVR_INTCODE);
-	//read ICIVR until it's cleared of all flags
-//	while(CSL_FEXT(i2cRegs->ICIVR, I2C_ICIVR_INTCODE) != CSL_I2C_ICIVR_INTCODE_NONE);
 }
 
 
@@ -1002,7 +1009,8 @@ void I2C_RX_Fxn(void)
 
 	//Log_info0("Inside: RX SWI\n");
 
-	CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_TRX,RX_MODE); //put I2C in RX mode
+	//CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_TRX,RX_MODE); //put I2C in RX mode
+	i2cRegs->ICMDR &= ~(CSL_I2C_ICMDR_TRX_MASK); //put I2C in RX mode
 
 	i2c_byte = i2cRegs->ICDRR; //read byte
 	BfrPut(&I2C_RXBUF, i2c_byte);
@@ -1984,10 +1992,12 @@ while(CSL_FEXT(i2cRegs->ICIVR, I2C_ICIVR_INTCODE) != CSL_I2C_ICIVR_INTCODE_NONE)
 
     if (is_missing_DAC) // write attempt failed (timeout)
     {   // clear all error flags resulting from the failed write attempt
-        CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_IRS,DISABLE);  //put i2c module in reset
+        //CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_IRS,DISABLE);  //put i2c module in reset
+		i2cRegs->ICMDR &= ~CSL_I2C_ICMDR_IRS_MASK; // put the I2C module in reset. - DKOH
         i2cRegs->ICSTR = CSL_I2C_ICSTR_RESETVAL; //clear interrupt status register
         while(CSL_FEXT(i2cRegs->ICIVR, I2C_ICIVR_INTCODE) != CSL_I2C_ICIVR_INTCODE_NONE); //clear interrupt vector register
-        CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_IRS,ENABLE);  //take i2c module out of reset
+        //CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_IRS,ENABLE);  //take i2c module out of reset
+		i2cRegs->ICMDR |= CSL_I2C_ICMDR_IRS_MASK; // take i2c module out of reset - DKOH
     }
 	else
 	{

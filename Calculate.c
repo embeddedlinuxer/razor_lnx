@@ -51,9 +51,9 @@ static int CAL_RTC_SEC, CAL_RTC_MIN, CAL_RTC_HR, CAL_RTC_DAY, CAL_RTC_MON, CAL_R
 //// Currently, it's called once every 0.5 seconds.
 void Count_Freq_Pulses(Uint32 u_sec_elapsed)
 {
-	///
+	CSL_TmrEnamode TimeCountMode = CSL_TMR_ENAMODE_ENABLE; // DKOH
+
 	/// handle usb tasks 
-	///
 	if (!isPdiUpgradeMode)
 	{
    			 if (isLogData) Swi_post(Swi_logData);
@@ -79,9 +79,8 @@ void Count_Freq_Pulses(Uint32 u_sec_elapsed)
 
     /// re-enable counter
     //CSL_FINST(tmr3Regs->TCR,TMR_TCR_ENAMODE_LO,EN_ONCE); 
-	//CSL_TmrStartLo(hTmr, CSL_TMR_ENAMODE_ENABLE);
-    //CSL_FINST(tmr3Regs->TCR,TMR_TCR_ENAMODE_LO, ENABLE); 
-	CSL_TmrStartLo(tmr3Regs, CSL_TMR_ENAMODE_ENABLE);
+	/* Start the timer with one shot */
+	CSL_tmrHwControl(tmr3Regs, CSL_TMR_CMD_START_TIMLO, (void *)&TimeCountMode);
 
     /// start counter timer
     Timer_start(counterTimerHandle);

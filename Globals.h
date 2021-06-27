@@ -86,6 +86,8 @@
 #include "Buffers.h"
 #include "ModbusRTU.h"
 
+#include <tistdtypes.h>
+
 #ifdef  GLOBAL_VARS
 #define _EXTERN
 #else

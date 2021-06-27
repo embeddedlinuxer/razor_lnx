@@ -20,11 +20,11 @@
 
 #undef MENU_H_
 #include <ti/board/board.h>
-
+#include <ti/csl/csl_tmrAux.h>
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-#include "device.h"
+//#include "device.h"
 #include "debug.h"
 #include "nandwriter.h"
 #include "nand.h"
@@ -52,7 +52,11 @@ static inline void Init_All(void);
 int main (void)
 {
     /// SUSPEND SOURCE REGISTER (SUSPSRC)
-    SYSTEM->SUSPSRC &= ((1 << 27) | (1 << 22) | (1 << 20) | (1 << 5) | (1 << 16));
+    //SYSTEM->SUSPSRC &= ((1 << 27) | (1 << 22) | (1 << 20) | (1 << 5) | (1 << 16));
+
+	/* Configure the suspend source register.
+       DSP as the source of the emulation suspend for EMAC, I2C, UART SPI and Timer  */
+	sysRegs->SUSPSRC &= ( (1 << 27) | (1 << 22) | (1 << 20) | (1 << 5) | (1 << 16));
 
     /// INITIALIZE EMIF FOR CS4 FLASH MEMORY REGION
     CSL_FINST(emifaRegs->CE4CFG,EMIFA_CE4CFG_ASIZE,16BIT);
@@ -123,8 +127,8 @@ static inline void Init_All(void)
 	Init_Counter_3();
 
     // CONFIGURE UART BAUDRATE & PARITY OPTIONS
-	//Config_Uart(REG_BAUD_RATE.calc_val,UART_PARITY_NONE);
-	UARTConfigInit(uartRegs,REG_BAUD_RATE.calc_val, UART_WORD_LENGTH_8, UART_STOP_BIT_1, UART_NO_PARITY,UART_16x_MODE);
+	Config_Uart(REG_BAUD_RATE.calc_val,UART_PARITY_NONE);
+	//UARTConfigInit(uartRegs,REG_BAUD_RATE.calc_val, UART_WORD_LENGTH_8, UART_STOP_BIT_1, UART_NO_PARITY,UART_16x_MODE);
                     
 	// Initialize software objects
 	initSoftwareObjects();
@@ -194,33 +198,56 @@ static inline void Init_Counter_3(void)
     int key;
 
     key = Hwi_disable();
+	CSL_TmrHwSetup hwSetup = CSL_TMR_HWSETUP_DEFAULTS; // DKOH
+	CSL_TmrEnamode TimeCountMode = CSL_TMR_ENAMODE_ENABLE; // DKOH
 
-    CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIM34RS,RESET);
-    CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIM12RS,RESET);
-    CSL_FINST(tmr3Regs->TCR,TMR_TCR_ENAMODE12,DISABLE);
+    //CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIM34RS,RESET);
+    //CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIM12RS,RESET);
+    //CSL_FINST(tmr3Regs->TCR,TMR_TCR_ENAMODE12,DISABLE);
+	CSL_FINST(tmr3Regs->TGCR, TMR_TGCR_TIMHIRS, RESET_ON); // DKOH
+	CSL_FINST(tmr3Regs->TGCR, TMR_TGCR_TIMLORS, RESET_ON); // DKOH
+    CSL_FINST(tmr3Regs->TCR, TMR_TCR_ENAMODE_HI,DISABLE); // DKOH
 
     //set timer mode to 64-bit
-    CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIMMODE,64BIT_GPT);
+    //CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIMMODE,64BIT_GPT);
 
     //Set clock source to external
-    CSL_FINST(tmr3Regs->TCR,TMR_TCR_CLKSRC12,TIMER);
+    //CSL_FINST(tmr3Regs->TCR,TMR_TCR_CLKSRC12,TIMER);
+	//CSL_FINS(tmr3Regs->TCR, TMR_TCR_CLKSRC_LO, hwSetup->tmrClksrcLo); // DKOH
+
+    //set timer mode to 64-bit
+	hwSetup.tmrTimerMode     = CSL_TMR_TIMMODE_GPT; // DKOH
+
+    //Set clock source to external
+	hwSetup.tmrClksrcLo     = CSL_TMR_CLKSRC_TMRINP; // DKOH
+	CSL_tmrHwSetup(tmr3Regs, &hwSetup); // DKOH
 
     //take timer out of reset
-    CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIM34RS,NO_RESET);
-    CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIM12RS,NO_RESET);
+    //CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIM34RS,NO_RESET);
+    //CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIM12RS,NO_RESET);
+	CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIMHIRS,RESET_OFF);
+    CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIMLORS,RESET_OFF);
 
     //reset counter value to zero (upper & lower)
-    tmr3Regs->TIM12 = 0;
-    tmr3Regs->TIM34 = 0;
+    //tmr3Regs->TIM12 = 0;
+    //tmr3Regs->TIM34 = 0;
+    tmr3Regs->CNTLO = 0;
+    tmr3Regs->CNTHI = 0;
 
     // timer period set to max
-    tmr3Regs->PRD12 = 0xFFFFFFFF;
-    tmr3Regs->PRD34 = 0xFFFFFFFF;
+    //tmr3Regs->PRD12 = 0xFFFFFFFF;
+    //tmr3Regs->PRD34 = 0xFFFFFFFF;
+    tmr3Regs->PRDLO = 0xFFFFFFFF;
+    tmr3Regs->PRDHI = 0xFFFFFFFF;
 
-    CSL_FINS(gpioRegs->BANK[GP6].OUT_DATA,GPIO_OUT_DATA_OUT1,TRUE);
+    //CSL_FINS(gpioRegs->BANK_REGISTERS[GP6].OUT_DATA,GPIO_OUT_DATA_OUT1,TRUE);
+	gpioRegs->BANK_REGISTERS[4].OUT_DATA |= 1 << 1;
 
     // Enable counter
-    CSL_FINST(tmr3Regs->TCR,TMR_TCR_ENAMODE12,EN_ONCE);
+    //CSL_FINST(tmr3Regs->TCR,TMR_TCR_ENAMODE12,EN_ONCE);
+
+	/* Start the timer with one shot */
+	CSL_tmrHwControl(tmr3Regs, CSL_TMR_CMD_START_TIMLO, (void *)&TimeCountMode);
 
     Hwi_restore(key);
 
