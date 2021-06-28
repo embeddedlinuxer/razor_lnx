@@ -24,13 +24,13 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-//#include "device.h"
 #include "debug.h"
 #include "nandwriter.h"
 #include "nand.h"
 #include "device_nand.h"
 #include "util.h" 
 #include "Globals.h"
+//#include "device.h"
 
 #define NANDWIDTH_16
 #define C6748_LCDK

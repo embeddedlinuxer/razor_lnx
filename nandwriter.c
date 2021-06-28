@@ -29,17 +29,17 @@
 *       ?-?-?       : David Skew : Created
 *       Jul-18-2018 : Daniel Koh : Migraged to linux platform
 *------------------------------------------------------------------------*/
-#include "nandwriter.h"
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include "device.h"
 #include "debug.h"
+#include "nandwriter.h"
 #include "nand.h"
 #include "device_nand.h"
+#include "Globals.h"
 #include "util.h"
 #include <ti/fs/fatfs/ff.h>
-#include "Globals.h"
-//#include "device.h"
 
 /************************************************************
 * FIRMWARE AND VARIABLE START BLOCK ADDRESS
@@ -70,10 +70,8 @@ static Uint8* gNandRx;
 * Function Declarations                                     *
 ************************************************************/
 
-//static Uint32 LOCAL_writeData(NAND_InfoHandle hNandInfo, Uint8 *srcBuf, Uint32 totalPageCnt);
-//static Uint32 USB_writeData(NAND_InfoHandle hNandInfo, Uint8 *srcBuf, Uint32 totalPageCnt);
-static Uint32 LOCAL_writeData(NAND_HANDLE hNandInfo, Uint8 *srcBuf, Uint32 totalPageCnt);
-static Uint32 USB_writeData(NAND_HANDLE hNandInfo, Uint8 *srcBuf, Uint32 totalPageCnt);
+static Uint32 LOCAL_writeData(NAND_InfoHandle hNandInfo, Uint8 *srcBuf, Uint32 totalPageCnt);
+static Uint32 USB_writeData(NAND_InfoHandle hNandInfo, Uint8 *srcBuf, Uint32 totalPageCnt);
 extern void UTIL_setCurrMemPtr(void *value);
 
 /************************************************************
@@ -99,10 +97,7 @@ void writeNand(void)
 void Store_Vars_in_NAND(void)
 {
     Uint32 num_pages;
-    //NAND_InfoHandle  hNandInfo;
-    NAND_HANDLE  hNandInfo; // DKOH
-	NAND_Info	*nandInfo; // DKOH	
-
+    NAND_InfoHandle  hNandInfo;
     Uint8 *heapPtr, *cfgPtr;
     Int32 data_size = 0, alloc_size = 0, i = 0;
 
