@@ -7,7 +7,6 @@
 	<buildSpec>
 		<buildCommand>
 			<name>org.eclipse.cdt.managedbuilder.core.genmakebuilder</name>
-			<triggers>clean,full,incremental,</triggers>
 			<arguments>
 			</arguments>
 		</buildCommand>
@@ -29,27 +28,27 @@
 	<variableList>
 		<variable>
 			<name>BIOS_INSTALL_PATH</name>
-			<value>file:/home/dkoh/ti/bios_6_76_03_01</value>
+			<value>file:/C:/ti/bios_6_76_03_01</value>
 		</variable>
 		<variable>
 			<name>C6000_CSL_CG_ROOT</name>
-			<value>file:/home/dkoh/ti/pdk_omapl138_1_0_11/packages/ti/csl</value>
+			<value>file:/C:/ti/pdk_omapl138_1_0_11/packages/ti/csl</value>
 		</variable>
 		<variable>
 			<name>ORIGINAL_PROJECT_ROOT</name>
-			<value>file:/home/dkoh/workspace/del/razor</value>
+			<value>file:/C:/home/dkoh/workspace/del/razor</value>
 		</variable>
 		<variable>
 			<name>PDK_INSTALL</name>
-			<value>file:/home/dkoh/ti/pdk_omapl138_1_0_11</value>
+			<value>file:/C:/ti/pdk_omapl138_1_0_11</value>
 		</variable>
 		<variable>
 			<name>PDK_INSTALL_PATH</name>
-			<value>file:/home/dkoh/ti/pdk_omapl138_1_0_11/packages</value>
+			<value>file:/C:/ti/pdk_omapl138_1_0_11/packages</value>
 		</variable>
 		<variable>
 			<name>XDCPATH</name>
-			<value>file:/home/dkoh/ti/xdctools_3_55_02_22_core</value>
+			<value>file:/C:/ti/xdctools_3_55_02_22_core</value>
 		</variable>
 	</variableList>
 </projectDescription>

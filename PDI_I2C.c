@@ -364,9 +364,7 @@ void Init_LCD(void)
 			LCD_DISP_CLR,LCD_ENTRY_MODE,LCD_SET_DDRAM_ADDR};
 
 	// configure GPIO0_7 (GPIO0_7_PIN) as an output
-	//CSL_FINS(gpioRegs->BANK_REGISTERS[4].DIR,GPIO_DIR_DIR7,0);
-	/* Set pin direction as input*/
-    GPIODirModeSet(gpioRegs, 7, GPIO_DIR_OUTPUT); // DKOH
+	CSL_FINS(gpioRegs->BANK_REGISTERS[4].DIR,GPIO_DIR_DIR7,0);
 
 	// turn on backlight
 	I2C_BACKLIGHT_EN = TRUE; 

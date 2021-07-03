@@ -7,7 +7,7 @@
 	<codegenToolVersion value="7.4.2"/>
 	<isElfFormat value="true"/>
 	<rts value="libc.a"/>
-	<origin value="/home/dkoh/workspace/razor_lnx"/>
+	<origin value="C:/Users/sangb/x/razor_lnx"/>
 	<isTargetManual value="false"/>
 	<connection value="common/targetdb/connections/TIXDS2XXUSB_Connection.xml"/>
 </projectOptions>

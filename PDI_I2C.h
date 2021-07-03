@@ -43,9 +43,13 @@
 /// This wasn't included in cslr_gpio.h for some reason
 #define CSL_GPIO_BINTEN_EN8_MASK         (0x00000100u)
 #define CSL_GPIO_BINTEN_EN8_SHIFT        (0x00000008u)
-/*----EN7 Tokens----*/
 #define CSL_GPIO_BINTEN_EN8_DISABLE      (0x00000000u)
 #define CSL_GPIO_BINTEN_EN8_ENABLE       (0x00000001u)
+
+#define CSL_GPIO_DIR_DIR7_MASK           (0x00000080u)
+#define CSL_GPIO_DIR_DIR7_SHIFT          (0x00000007u)
+#define CSL_GPIO_DIR_DIR7_RESETVAL       (0x00000001u)
+
 ///
 
 #define I2C_INT_GENERATED_FALSE (0x00)

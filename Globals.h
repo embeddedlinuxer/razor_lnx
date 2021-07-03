@@ -302,36 +302,68 @@ typedef struct
 /// 
 ///////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////
+#ifdef GLOBAL_VARS
+    // USB OTG Overlays
+    CSL_Usb_otgRegsOvly usbRegs = (CSL_Usb_otgRegsOvly)CSL_USB_0_REGS;
 
+    // Register Overlays
+    CSL_I2cRegsOvly     i2cRegs = (CSL_I2cRegsOvly)CSL_I2C_0_DATA_CFG;
+
+    // sys config registers overlay
+    CSL_SyscfgRegsOvly  sysRegs = (CSL_SyscfgRegsOvly)(CSL_SYSCFG_0_REGS);
+
+    // Psc register overlay
+    CSL_PscRegsOvly     psc1Regs = (CSL_PscRegsOvly)(CSL_PSC_1_REGS);
+
+    // Gpio register overlay
+    CSL_GpioHandle        gpioRegs = (CSL_GpioHandle)(CSL_GPIO_0_REGS);
+
+    // Interrupt Controller Register Overlay
+    CSL_IntcRegsOvly     intcRegs = (CSL_IntcRegsOvly)CSL_INTC_0_REGS;
+
+    // Uart register overlay
+    CSL_UartRegsOvly    uartRegs = (CSL_UartRegsOvly)CSL_UART_2_REGS;
+
+    // EMIFA register overlay
+    CSL_EmifaRegsOvly   emifaRegs = (CSL_EmifaRegsOvly)CSL_EMIFA_0_REGS;
+
+    // Timer register overlays
+    CSL_TmrRegsOvly     tmr3Regs = (CSL_TmrRegsOvly)CSL_TMR_3_REGS;
+
+    // syscfg register overlay
+    CSL_Syscfg1RegsOvly sys1Regs = (CSL_Syscfg1RegsOvly)(CSL_SYSCFG_1_REGS);
+
+	#else
     // Usb Overlays
     extern CSL_Usb_otgRegsOvly usbRegs;
 
-	// Register Overlays 
-	extern CSL_I2cRegsOvly 	   i2cRegs;
+    // Register Overlays
+    extern CSL_I2cRegsOvly     i2cRegs;
 
-	// sys config registers overlay
-	extern CSL_SyscfgRegsOvly  sysRegs;
+    // sys config registers overlay
+    extern CSL_SyscfgRegsOvly  sysRegs;
 
-	// Psc register overlay
-	extern CSL_PscRegsOvly     psc1Regs;
+    // Psc register overlay
+    extern CSL_PscRegsOvly     psc1Regs;
 
-	// Gpio register overlay
-	extern CSL_GpioHandle    gpioRegs;
+    // Gpio register overlay
+    extern CSL_GpioHandle    gpioRegs;
 
-	// Interrupt Controller Register Overlay
-	extern CSL_IntcRegsOvly intcRegs;
+    // Interrupt Controller Register Overlay
+    extern CSL_IntcRegsOvly intcRegs;
 
-	// Uart register overlay
-	extern CSL_UartRegsOvly	   uartRegs;
+    // Uart register overlay
+    extern CSL_UartRegsOvly    uartRegs;
 
-	// EMIFA register overlay
-	extern CSL_EmifaRegsOvly   emifaRegs;
+    // EMIFA register overlay
+    extern CSL_EmifaRegsOvly   emifaRegs;
 
-	// Timer register overlays
-	extern CSL_TmrRegsOvly 	   tmr3Regs;
+    // Timer register overlays
+    extern CSL_TmrRegsOvly     tmr3Regs;
 
-	// RTC register overlay
-	extern CSL_Syscfg1RegsOvly sys1Regs;
+    // syscfg register overlay
+    extern CSL_Syscfg1RegsOvly sys1Regs;
+#endif
 
 ///////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////

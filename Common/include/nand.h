@@ -242,6 +242,11 @@ typedef struct _NAND_BB_INFO_
 }
 NAND_BB_InfoObj, *NAND_BB_InfoHandle;
 
+/* Volatile unsigned integer definitions (32bit, 16bit, 8bit) follow... */
+typedef volatile unsigned int        VUint32;
+typedef volatile unsigned short      VUint16;
+typedef volatile unsigned char       VUint8;
+
 typedef union
 {
   Uint8 c;

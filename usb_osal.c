@@ -216,32 +216,6 @@ void usb_osalClearPerfCounter(void)
 #endif
 }
 
-/* 
- * read time stamp count 
- * Using SOC/ARM/DSP provided performance measure counter unit
- * 
- */
-uint32_t usb_osalGetPerfCounter(void)
-{
-    uint32_t timeVal = 0;
-
-#if defined(SOC_AM65XX)
-#if defined(BUILD_MPU)
-    timeVal = CSL_getPmuCycleCount() - pmuOverhead;
-#endif
-#if defined(BUILD_MCU)
-    timeVal =CSL_armR5PmuReadCntr(CSL_ARM_R5_PMU_CYCLE_COUNTER_NUM);
-    timeVal -= pmuOverhead;
-#endif
-#else
-#if !(defined(SOC_OMAPL137) || defined(SOC_OMAPL138))
-    __asm__ __volatile__ ("MRC p15, 0, %0, c9, c13, 0\t\n": "=r"(timeVal)); 
-#endif
-#endif
-
-    return timeVal;
-}
-
 /* end of OSAL implementation */
 
 
