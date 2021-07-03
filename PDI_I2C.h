@@ -99,27 +99,29 @@
 
 #define I2C_INIT_NUM_CHARS      (6)
 
-//#define I2C_START_SET		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STT,SET)
-//#define I2C_STOP_SET		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,SET)
-//#define I2C_STOP_SET		I2CMasterStop(i2cRegs);
-//#define I2C_START_SET		I2CMasterStart(i2cRegs);
-#define I2C_STOP_SET 		i2cRegs->ICMDR |= CSL_I2C_ICMDR_STP_MASK;
-#define I2C_START_SET       i2cRegs->ICMDR |= CSL_I2C_ICMDR_STT_MASK;
-#define I2C_START_CLR		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STT,CLEAR)
-#define I2C_STOP_CLR		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,CLEAR)
+//#define I2C_STT_SET		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STT,SET)
+//#define I2C_STT_CLR		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STT,CLEAR)
+//#define I2C_STP_SET		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,SET)
+//#define I2C_STP_CLR		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STP,CLEAR)
+#define I2C_STT_SET       	i2cRegs->ICMDR |= CSL_I2C_ICMDR_STT_MASK;
+#define I2C_STT_CLR			i2cRegs->ICMDR &= ~CSL_I2C_ICMDR_STT_MASK;
+#define I2C_STP_SET 		i2cRegs->ICMDR |= CSL_I2C_ICMDR_STP_MASK;
+#define I2C_STP_CLR			i2cRegs->ICMDR &= ~CSL_I2C_ICMDR_STP_MASK;
 
-//#define I2C_RX_MODE			CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_TRX,RX_MODE)
-//#define I2C_TX_MODE			CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_TRX,TX_MODE)
+//#define I2C_RX_MODE		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_TRX,RX_MODE)
+//#define I2C_TX_MODE		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_TRX,TX_MODE)
 #define I2C_RX_MODE			i2cRegs->ICMDR &= ~(CSL_I2C_ICMDR_TRX_MASK);
 #define I2C_TX_MODE			i2cRegs->ICMDR |= CSL_I2C_ICMDR_TRX_MASK;
 
 //#define I2C_RM_ON			CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_RM,ENABLE)
 //#define I2C_RM_OFF		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_RM,DISABLE)
-#define I2C_RM_ON 			I2CMasterControl(i2cRegs->ICMDR,I2C_CFG_CMD_REPEAT_MODE_ON)
-#define I2C_RM_OFF 			I2CMasterControl(i2cRegs->ICMDR,I2C_CFG_CMD_REPEAT_MODE_OFF)
+//#define I2C_RM_ON 		I2CMasterControl(i2cRegs->ICMDR,I2C_CFG_CMD_REPEAT_MODE_ON)
+//#define I2C_RM_OFF 		I2CMasterControl(i2cRegs->ICMDR,I2C_CFG_CMD_REPEAT_MODE_OFF)
+#define I2C_RM_ON			i2cRegs->ICMDR |= CSL_I2C_ICMDR_RM_MASK 
+#define I2C_RM_OFF			i2cRegs->ICMDR &= ~CSL_I2C_ICMDR_RM_MASK 
 
-#define I2C_STBMODE_ON		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STB,ENABLE) 	//start byte mode enable
-#define I2C_STBMODE_OFF		CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_STB,DISABLE)	//start byte mode disable
+//#define I2C_MASTER_MODE	CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_MST,MASTER_MODE)	// put I2C module in Master mode
+#define I2C_MASTER_MODE	    i2cRegs->ICMDR |= CSL_I2C_ICMDR_MST_MASK	// put I2C module in Master mode
 
 #define I2C_CNT_0BYTE		i2cRegs->ICCNT = CSL_FMK(I2C_ICCNT_ICDC,0x0) 	//Data count register = 0
 #define I2C_CNT_1BYTE		i2cRegs->ICCNT = CSL_FMK(I2C_ICCNT_ICDC,0x1) 	//Data count register = 1
@@ -127,8 +129,6 @@
 #define I2C_CNT_3BYTE		i2cRegs->ICCNT = CSL_FMK(I2C_ICCNT_ICDC,0x3) 	//Data count register = 3
 #define I2C_CNT_4BYTE		i2cRegs->ICCNT = CSL_FMK(I2C_ICCNT_ICDC,0x4) 	//Data count register = 4
 #define I2C_CNT_6BYTE		i2cRegs->ICCNT = CSL_FMK(I2C_ICCNT_ICDC,0x6) 	// TESTING PURPOSES
-//#define I2C_MASTER_MODE	    CSL_FINST(i2cRegs->ICMDR,I2C_ICMDR_MST,MASTER_MODE)	// put I2C module in Master mode
-#define I2C_MASTER_MODE	    i2cRegs->ICMDR = CSL_I2C_ICMDR_MST_MASK	// put I2C module in Master mode
 
 static Uint8 ADC_BUSY_TEMP;
 static Uint8 ADC_BUSY_VREF;
