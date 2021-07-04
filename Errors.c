@@ -57,14 +57,12 @@ void Update_Relays(void)
     	delayTimer++;
         if ((delayTimer > REG_RELAY_DELAY) || (COIL_RELAY_MANUAL.val))
         {    
-            //CSL_FINS(gpioRegs->BANK_REGISTERS[1].OUT_DATA, GPIO_OUT_DATA_OUT5, 1); // Relay ON
             gpioRegs->BANK_REGISTERS[1].OUT_DATA |= 1 << 5; // Relay ON
             delayTimer = 0; 
         }    
    	}    
     else 
 	{
-   		//CSL_FINS(gpioRegs->BANK_REGISTERS[1].OUT_DATA, GPIO_OUT_DATA_OUT5, 0);	// Relay OFF
         gpioRegs->BANK_REGISTERS[1].OUT_DATA &= ~(1 << 5); // Relay OFF
 		delayTimer = 0;
 	}	

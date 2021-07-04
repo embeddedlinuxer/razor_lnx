@@ -26,7 +26,6 @@
 
 void resetGlobalVars(void)
 {
-    //CSL_FINS(gpioRegs->BANK[1].OUT_DATA,GPIO_OUT_DATA_OUT5,FALSE); //set GPIO pin as output
     gpioRegs->BANK_REGISTERS[1].OUT_DATA &= ~(1 << 5); //set GPIO pin as output
     isUsbPipeBusy = FALSE;
     isWatchDogEnabled = FALSE;
@@ -547,7 +546,6 @@ void reloadFactoryDefault(void)
 	COIL_Initialize(&COIL_UNLOCKED_FACTORY_DEFAULT, FALSE, 0);
 	COIL_Initialize(&COIL_UPGRADE_ENABLE, FALSE, 0);
 
-	//CSL_FINS(gpioRegs->BANK[1].OUT_DATA,GPIO_OUT_DATA_OUT5,FALSE); //set GPIO pin as output
 	gpioRegs->BANK_REGISTERS[1].OUT_DATA &= ~(1 << 5); //set GPIO pin as output
 	THROW_ERROR 		= 0;
 	DIAGNOSTICS 		= 0;

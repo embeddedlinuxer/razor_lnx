@@ -48,8 +48,6 @@
 #include "PDI_I2C.h"
 #include "Menu.h"
 
-#define I2C_CFG_CMD_REPEAT_MODE_ON  (CSL_I2C_ICMDR_RM_MASK)
-#define I2C_CFG_CMD_REPEAT_MODE_OFF (0U)
 #define I2C_DELAY_TIME  1000
 #define KEY             1
 #define NO_KEY          0

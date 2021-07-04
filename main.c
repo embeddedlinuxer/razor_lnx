@@ -11,34 +11,19 @@
 *
 * Copyright (c) 2018 Phase Dynamics Inc. ALL RIGHTS RESERVED.
 *------------------------------------------------------------------------*/
-/*------------------------------------------------------------------------
-* Main.c
 ///////////////////////////////////////////////////////////////////////////
 // HISTORY
 ///////////////////////////////////////////////////////////////////////////
 // ver 1.02.09 | Jan-29-2021 | Daniel Koh | SHIPPED 8843, 8844, 8845, 8846
 // ver 1.02.10 | Mar-03-2021 | Daniel Koh | Changed logData, REG_STREAM upload fix
 // ver 1.02.11 | Jun-01-2021 | Daniel Koh | la_offet added to 0x10 ModbusRTU.c
-// ver 1.02.12 | Jun-01-2021 | Daniel Koh | la_offet added to 0x10 ModbusRTU.c
+// ver 1.02.12 | Jun-28-2021 | Daniel Koh |	fixed modbus CRC for calibration 
 // ver 1.02.13 | Jul-06-2021 | Daniel Koh | completely replaced ancient-year-old sdk with the latest sdk 
 //
 
 #undef MENU_H_
 
-#include <ti/board/board.h>
-#include <ti/csl/csl_tmrAux.h>
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
-#include "debug.h"
-#include "nandwriter.h"
-#include "nand.h"
-#include "device_nand.h"
-#include "util.h" 
 #include "Globals.h"
-
-#define NANDWIDTH_16
-#define C6748_LCDK
 
 extern void setupwatchdog(void);
 extern void delayTimerSetup(void);
@@ -56,9 +41,6 @@ static inline void Init_All(void);
 
 int main (void)
 {
-    /// SUSPEND SOURCE REGISTER (SUSPSRC)
-    //SYSTEM->SUSPSRC &= ((1 << 27) | (1 << 22) | (1 << 20) | (1 << 5) | (1 << 16));
-
 	/* Configure the suspend source register.
        DSP as the source of the emulation suspend for EMAC, I2C, UART SPI and Timer  */
 	sysRegs->SUSPSRC &= ( (1 << 27) | (1 << 22) | (1 << 20) | (1 << 5) | (1 << 16));
@@ -133,7 +115,6 @@ static inline void Init_All(void)
 
     // CONFIGURE UART BAUDRATE & PARITY OPTIONS
 	Config_Uart(REG_BAUD_RATE.calc_val,UART_PARITY_NONE);
-	//UARTConfigInit(uartRegs,REG_BAUD_RATE.calc_val, UART_WORD_LENGTH_8, UART_STOP_BIT_1, UART_NO_PARITY,UART_16x_MODE);
                     
 	// Initialize software objects
 	initSoftwareObjects();
@@ -203,60 +184,39 @@ static inline void Init_Counter_3(void)
     int key;
 
     key = Hwi_disable();
-	CSL_TmrHwSetup hwSetup = CSL_TMR_HWSETUP_DEFAULTS; // DKOH
-	CSL_TmrEnamode TimeCountMode = CSL_TMR_ENAMODE_ENABLE; // DKOH
 
-    //CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIM34RS,RESET);
-    //CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIM12RS,RESET);
-    //CSL_FINST(tmr3Regs->TCR,TMR_TCR_ENAMODE12,DISABLE);
-	CSL_FINST(tmr3Regs->TGCR, TMR_TGCR_TIMHIRS, RESET_ON); // DKOH
-	CSL_FINST(tmr3Regs->TGCR, TMR_TGCR_TIMLORS, RESET_ON); // DKOH
-    CSL_FINST(tmr3Regs->TCR, TMR_TCR_ENAMODE_HI,DISABLE); // DKOH
+	CSL_TmrHwSetup hwSetup = CSL_TMR_HWSETUP_DEFAULTS; 
+	CSL_TmrEnamode TimeCountMode = CSL_TMR_ENAMODE_ENABLE; 
 
-    //set timer mode to 64-bit
-    //CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIMMODE,64BIT_GPT);
+	CSL_FINST(tmr3Regs->TGCR, TMR_TGCR_TIMHIRS, RESET_ON); 
+	CSL_FINST(tmr3Regs->TGCR, TMR_TGCR_TIMLORS, RESET_ON);
+    CSL_FINST(tmr3Regs->TCR, TMR_TCR_ENAMODE_HI, DISABLE);
 
-    //Set clock source to external
-    //CSL_FINST(tmr3Regs->TCR,TMR_TCR_CLKSRC12,TIMER);
-	//CSL_FINS(tmr3Regs->TCR, TMR_TCR_CLKSRC_LO, hwSetup->tmrClksrcLo); // DKOH
+    /// set timer mode to 64-bit
+	hwSetup.tmrTimerMode     = CSL_TMR_TIMMODE_GPT; 
 
-    //set timer mode to 64-bit
-	hwSetup.tmrTimerMode     = CSL_TMR_TIMMODE_GPT; // DKOH
+    /// Set clock source to external
+	hwSetup.tmrClksrcLo     = CSL_TMR_CLKSRC_TMRINP; 
+	CSL_tmrHwSetup(tmr3Regs, &hwSetup); 
 
-    //Set clock source to external
-	hwSetup.tmrClksrcLo     = CSL_TMR_CLKSRC_TMRINP; // DKOH
-	CSL_tmrHwSetup(tmr3Regs, &hwSetup); // DKOH
-
-    //take timer out of reset
-    //CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIM34RS,NO_RESET);
-    //CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIM12RS,NO_RESET);
+    /// take timer out of reset
 	CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIMHIRS,RESET_OFF);
     CSL_FINST(tmr3Regs->TGCR,TMR_TGCR_TIMLORS,RESET_OFF);
 
-    //reset counter value to zero (upper & lower)
-    //tmr3Regs->TIM12 = 0;
-    //tmr3Regs->TIM34 = 0;
+    /// reset counter value to zero (upper & lower)
     tmr3Regs->CNTLO = 0;
     tmr3Regs->CNTHI = 0;
 
-    // timer period set to max
-    //tmr3Regs->PRD12 = 0xFFFFFFFF;
-    //tmr3Regs->PRD34 = 0xFFFFFFFF;
+    /// timer period set to max
     tmr3Regs->PRDLO = 0xFFFFFFFF;
     tmr3Regs->PRDHI = 0xFFFFFFFF;
 
-    //CSL_FINS(gpioRegs->BANK_REGISTERS[GP6].OUT_DATA,GPIO_OUT_DATA_OUT1,TRUE);
-	gpioRegs->BANK_REGISTERS[4].OUT_DATA |= 1 << 1;
-
-    // Enable counter
-    //CSL_FINST(tmr3Regs->TCR,TMR_TCR_ENAMODE12,EN_ONCE);
-
-	/* Start the timer with one shot */
+    /// Enable counter
 	CSL_tmrHwControl(tmr3Regs, CSL_TMR_CMD_START_TIMLO, (void *)&TimeCountMode);
 
     Hwi_restore(key);
 
-    // Start counter timer
+    /// start counter timer
     Timer_start(counterTimerHandle);
 }
 

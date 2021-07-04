@@ -38,6 +38,8 @@
 
 #define BOOL Uint8
 #define DEMO_MODE
+#define NANDWIDTH_16
+#define C6748_LCDK
 
 #include <stdio.h>
 #include <string.h>
@@ -67,10 +69,15 @@
 #include <ti/csl/cslr_gpio.h>
 #include <ti/csl/src/ip/gpio/csl_gpio.h>
 #include <ti/csl/cslr_tmr.h>
+#include <ti/csl/csl_tmrAux.h>
 #include <ti/csl/cslr_rtc.h>
 #include <ti/csl/soc/omapl138/src/cslr_soc_baseaddress.h>
 #include <ti/csl/soc/omapl138/src/cslr_soc.h>
 
+#include "nandwriter.h"
+#include "nand.h"
+#include "device_nand.h"
+#include "util.h"
 #include "Errors.h"
 #include "Variable.h"
 #include "Units.h"

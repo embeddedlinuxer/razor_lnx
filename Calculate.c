@@ -51,7 +51,7 @@ static int CAL_RTC_SEC, CAL_RTC_MIN, CAL_RTC_HR, CAL_RTC_DAY, CAL_RTC_MON, CAL_R
 //// Currently, it's called once every 0.5 seconds.
 void Count_Freq_Pulses(Uint32 u_sec_elapsed)
 {
-	CSL_TmrEnamode TimeCountMode = CSL_TMR_ENAMODE_ENABLE; // DKOH
+	CSL_TmrEnamode TimeCountMode = CSL_TMR_ENAMODE_ENABLE;
 
 	/// handle usb tasks 
 	if (!isPdiUpgradeMode)
@@ -77,9 +77,7 @@ void Count_Freq_Pulses(Uint32 u_sec_elapsed)
     tmr3Regs->CNTLO = 0;
     tmr3Regs->CNTHI = 0;
 
-    /// re-enable counter
-    //CSL_FINST(tmr3Regs->TCR,TMR_TCR_ENAMODE_LO,EN_ONCE); 
-	/* Start the timer with one shot */
+	/// re-start the timer with one shot 
 	CSL_tmrHwControl(tmr3Regs, CSL_TMR_CMD_START_TIMLO, (void *)&TimeCountMode);
 
     /// start counter timer
@@ -121,14 +119,10 @@ void Poll(void)
 
 		if (!err_d)
 		{
-			///
 			/// add adjustment from density correction (if any)
-			///
 			WC += REG_DENS_CORR;
 
-			///
 			/// max oil-phase watercut (WC > 85%)
-			///
 			if (WC > REG_OIL_CALC_MAX) WC = 100.00;	
 		}
 	}
@@ -141,9 +135,7 @@ void Poll(void)
 	{
 		COIL_AO_ALARM.val = FALSE;
 
-		///
 		/// update REG_WATERCUT here
-		///
     	VAR_Update(&REG_WATERCUT,WC,CALC_UNIT);
 
 		REG_AO_OUTPUT = (16*(REG_WATERCUT.val/100)) + 4; 
@@ -164,9 +156,7 @@ Uint8 Read_Freq(void)
 	int key;
 	double freq;
 
-	///
 	/// check errors
-	///
 	if ((FREQ_PULSE_COUNT_HI != 0) || (FREQ_U_SEC_ELAPSED == 0)) // this probably shouldn't happen
 	{
 		if (FREQ_PULSE_COUNT_HI != 0) 
@@ -188,36 +178,24 @@ Uint8 Read_Freq(void)
 		
 	key = Swi_disable();
 
-	///
 	/// #pulses divided by #microseconds
-	///
 	freq = ((double)FREQ_PULSE_COUNT_LO) / ((double)FREQ_U_SEC_ELAPSED); 
 
-	///
 	/// oscillator board uses 80x divider
-	///
 	freq *= 80;	
 
-	///
 	/// apply PDI_FREQ_F0 / PDI_FREQ_F1
-	///
     freq += PDI_FREQ_F1*REG_TEMPERATURE.calc_val + PDI_FREQ_F0;
 
-	///
     /// apply REG_OIL_INDEX
-	///
     freq += REG_OIL_INDEX.calc_val;
 
-	///
 	/// update frequency
-	///
 	VAR_Update(&REG_FREQ, freq, CALC_UNIT); 	
 
 	Swi_restore(key);
 
-	///
 	/// error checking
-	///
 	checkError(REG_FREQ.calc_val, 0, 1000, ERR_FRQ_LO, ERR_FRQ_HI);
 	if ((DIAGNOSTICS & ERR_FRQ_HI) || (DIAGNOSTICS & ERR_FRQ_LO)) return 1;
 
@@ -229,9 +207,7 @@ void Read_User_Temperature(void)
 {
 	VAR_Update(&REG_TEMP_USER, REG_TEMPERATURE.calc_val + REG_TEMP_ADJUST.calc_val + PDI_TEMP_ADJ, CALC_UNIT);
 
-	///
 	/// error checking
-	///
 	checkError(REG_TEMP_USER.calc_val, -20, 120, ERR_TMP_LO, ERR_TMP_HI);
 }
 

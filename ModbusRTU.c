@@ -158,7 +158,6 @@ Init_PinMux(void)
 	CSL_FINST(sys1Regs->PUPD_ENA, SYSCFG1_PUPD_ENA_PUPDENA0, ENABLE);   
 
 	// configure pin group 0 as pull-down (UART2_CTS)
-	//CSL_FINST(sys1Regs->PUPD_ENA, SYSCFG1_PUPD_SEL_PUPDSEL0, PULLDOWN); 
 	CSL_FINST(sys1Regs->PUPD_SEL, SYSCFG1_PUPD_SEL_PUPDSEL0, PULLDOWN); 
 
 	// configure CP[18] for pull-down
@@ -169,34 +168,22 @@ Init_PinMux(void)
 	/////////////////////////// 
 
 	// enable MUX4 for I2C0_SDA
-	//CSL_FINST(sysRegs->PINMUX4, SYSCFG_PINMUX4_PINMUX4_15_12,I2C0_SDA);
 	sysRegs->PINMUX4 |= CSL_SYSCFG_PINMUX4_PINMUX4_15_12_I2C0_SDA;
 
 	// enable MUX4 for I2C0_SCL
-	//CSL_FINST(sysRegs->PINMUX4, SYSCFG_PINMUX4_PINMUX4_11_8,I2C0_SCL);
 	sysRegs->PINMUX4 |= CSL_SYSCFG_PINMUX4_PINMUX4_11_8_I2C0_SCL;
 
 	// enable MUX4 for UART2_TXD
-	//CSL_FINST(sysRegs->PINMUX4, SYSCFG_PINMUX4_PINMUX4_23_20,UART2_TXD);
 	sysRegs->PINMUX4 |= CSL_SYSCFG_PINMUX4_PINMUX4_23_20_UART2_TXD;
 
 	// enable MUX4 for UART2_RXD
-	//CSL_FINST(sysRegs->PINMUX4, SYSCFG_PINMUX4_PINMUX4_19_16,UART2_RXD);
 	sysRegs->PINMUX4 |= CSL_SYSCFG_PINMUX4_PINMUX4_19_16_UART2_RXD;
-
-	// enable MUX4 for DEFAULT (TM64P0_IN12) 
-	//CSL_FINST(sysRegs->PINMUX4, SYSCFG_PINMUX4_PINMUX4_7_4,DEFAULT);
-	//sysRegs->PINMUX4 |= CSL_SYSCFG_PINMUX4_PINMUX4_7_4_DEFAULT;
 
 	// enable MUX0 for GP0[9]
 	CSL_FINST(sysRegs->PINMUX0, SYSCFG_PINMUX0_PINMUX0_27_24, GPIO0_9);
 
 	// enable MUX1 for GP0[7]	
 	CSL_FINST(sysRegs->PINMUX1, SYSCFG_PINMUX1_PINMUX1_3_0, GPIO0_7);
-
-	// enable MUX5 for DEFAULT (TM64P3_IN12)
-	//CSL_FINST(sysRegs->PINMUX5, SYSCFG_PINMUX5_PINMUX5_7_4, DEFAULT);
-	//sysRegs->PINMUX4 |= CSL_SYSCFG_PINMUX4_PINMUX5_7_4_DEFAULT;
 
 	// enable MUX19 for GP6[1]
 	CSL_FINST(sysRegs->PINMUX19, SYSCFG_PINMUX19_PINMUX19_23_20, GPIO6_1);
@@ -212,35 +199,27 @@ Init_PinMux(void)
 	/////////////////////////// 
 
 	// configure GP0[9] as output
-	//CSL_FINS(gpioRegs->BANK_REGISTERS[0].DIR,GPIO_DIR_DIR9,CSL_GPIO_DIR_DIR_OUT);
 	gpioRegs->BANK_REGISTERS[0].DIR &= ~(1 << 9);
 
 	// configure GP0[7] as output
-	//CSL_FINS(gpioRegs->BANK_REGISTERS[0].DIR,GPIO_DIR_DIR7,CSL_GPIO_DIR_DIR_OUT);
 	gpioRegs->BANK_REGISTERS[0].DIR &= ~(1 << 7);
 
 	// configure GP6[1] as output
-	//CSL_FINS(gpioRegs->BANK_REGISTERS[3].DIR,GPIO_DIR_DIR1,CSL_GPIO_DIR_DIR_OUT);
 	gpioRegs->BANK_REGISTERS[3].DIR &= ~(1 << 1);
 
 	// configure GP6[0] as input
-	//CSL_FINS(gpioRegs->BANK_REGISTERS[3].DIR,GPIO_DIR_DIR0,CSL_GPIO_DIR_DIR_IN);
 	gpioRegs->BANK_REGISTERS[3].DIR |= 1 << 0;
 
 	// configure GP2[5] as output for relay
-	//CSL_FINS(gpioRegs->BANK_REGISTERS[1].DIR,GPIO_DIR_DIR5,CSL_GPIO_DIR_DIR_OUT);
 	gpioRegs->BANK_REGISTERS[1].DIR &= ~(1 << 5);
 	
 	// configure GP8[12] as input for LCD input
-	//CSL_FINS(gpioRegs->BANK_REGISTERS[4].DIR,GPIO_DIR_DIR12,CSL_GPIO_DIR_DIR_IN);
 	gpioRegs->BANK_REGISTERS[4].DIR |= 1 << 12;
 
 	/////////////////////////// 
 	// ASSIGN INITIAL VALUE
 	/////////////////////////// 
 
-	//CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA, GPIO_OUT_DATA_OUT9,0);
-	//CSL_FINS(gpioRegs->BANK_REGISTERS[1].OUT_DATA, GPIO_OUT_DATA_OUT5,0);
 	gpioRegs->BANK_REGISTERS[0].OUT_DATA &= ~(1 << 9);
 	gpioRegs->BANK_REGISTERS[1].OUT_DATA &= ~(1 << 5);
 }
@@ -257,7 +236,6 @@ Config_Uart(Uint32 baudrate, Uint8 parity)
 	CSL_FINST(uartRegs->PWREMU_MGMT,UART_PWREMU_MGMT_UTRST,RESET);
 	CSL_FINST(uartRegs->PWREMU_MGMT,UART_PWREMU_MGMT_URRST,RESET);
 
-	//uartRegs->LCR = CSL_FMKT(UART_LCR_WLS,8BITS); 		//word length 8bits
 	uartRegs->LCR |= CSL_UART_LCR_WLS__8BITS;
 
 	//modem control register
@@ -405,8 +383,7 @@ Init_Uart(void)
   	CSL_FINST(uartRegs->PWREMU_MGMT,UART_PWREMU_MGMT_UTRST,RESET);
   	CSL_FINST(uartRegs->PWREMU_MGMT,UART_PWREMU_MGMT_URRST,RESET);
 
-  	//uartRegs->LCR = CSL_FMKT(UART_LCR_WLS,8BITS); 			//word length 8bits
-	uartRegs->LCR |= CSL_UART_LCR_WLS__8BITS;
+	uartRegs->LCR |= CSL_UART_LCR_WLS__8BITS; 				// word length 8 bits
 
   //modem control register
   uartRegs->MCR = CSL_FMKT(UART_MCR_RTS,ENABLE)  			//RTS control
@@ -556,8 +533,8 @@ Uart_ISR(void)
 		//read LSR for empty TX EMPTY status
 		if ( (CSL_FEXT(uartRegs->LSR,UART_LSR_TEMT) == 1) && (UART_TXBUF.n > 0) )
 		{
-			//CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA,GPIO_OUT_DATA_OUT9,1);
 			gpioRegs->BANK_REGISTERS[0].OUT_DATA |= (1 << 9);
+
 			for (i=0;i<UART_FIFO_SIZE-1;i++)
 			{
 				if (UART_TXBUF.n > 0) //transfer from SW TX buffer to HW TX FIFO
@@ -573,7 +550,6 @@ Uart_ISR(void)
 
 		if ( (CSL_FEXT(uartRegs->LSR,UART_LSR_TEMT) == 1) && (UART_TXBUF.n <= 0) )
 		{
-			//CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA,GPIO_OUT_DATA_OUT9,0);
 			gpioRegs->BANK_REGISTERS[0].OUT_DATA &= ~(1 << 9);
 		}
 
@@ -624,7 +600,6 @@ Uart_ISR(void)
 			case LINE_STATUS_INT:
 				delayInt(0x1); //in place of NOPS
 				line_status = CSL_FEXTR(uartRegs->LSR,7,0);
-//				Update_Uart_Error_Cnt(line_status); //add errors to error count stats
 
 				// reset UART -- hopefully to recover from failure/infinite loop
 				CSL_FINST(uartRegs->PWREMU_MGMT,UART_PWREMU_MGMT_UTRST,RESET);
@@ -647,13 +622,10 @@ Uart_ISR(void)
 		/// Note:	Keeping UART ISR in a while loop until the modbus tx buffer is empty was a STUPID idea.
 		///			The real solution is to remove as many Hwi_disable's as possible and set a high
 		///			priority for UART ISR.
-//		if (UART_TXBUF.n > 0)
-//			all_INTs_cleared = FALSE; //testing this... force to wait until SW TX buffer is emptied
 	}
 
 	if ( (CSL_FEXT(uartRegs->LSR,UART_LSR_TEMT) == 1) && (UART_TXBUF.n <= 0) )
 	{
-		//CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA,GPIO_OUT_DATA_OUT9,0);
 		gpioRegs->BANK_REGISTERS[0].OUT_DATA &= ~(1 << 9);
 	}
 
@@ -1429,7 +1401,7 @@ void MB_SendPacket_Int16(void)
     {
         BfrPut(&UART_TXBUF,REG_SLAVE_ADDRESS); 
     }
-	//BfrPut(&UART_TXBUF,REG_SLAVE_ADDRESS); // DKOH
+
 	BfrPut(&UART_TXBUF,mb_pkt_ptr->fxn);
 
 	////////////////////////////////////////////
@@ -1736,7 +1708,7 @@ MB_SendPacket_Coil(void)
     {
         BfrPut(&UART_TXBUF,REG_SLAVE_ADDRESS);
     }
-	//BfrPut(&UART_TXBUF,REG_SLAVE_ADDRESS); // DKOH
+
 	BfrPut(&UART_TXBUF,mb_pkt_ptr->fxn);
 
     /////////////////////////////////////////////////
@@ -1964,7 +1936,7 @@ MB_SendPacket_LongInt(void)
     {
 	    BfrPut(&UART_TXBUF,REG_SLAVE_ADDRESS);
     }
-	//BfrPut(&UART_TXBUF,REG_SLAVE_ADDRESS); // DKOH
+
 	BfrPut(&UART_TXBUF,mb_pkt_ptr->fxn);
 
 	////////////////////////////////////////////
@@ -2719,12 +2691,10 @@ MB_PacketDone(void)
 	if ( (CSL_FEXT(uartRegs->LSR,UART_LSR_TEMT) == 1) )
 	{
 		MB_TX_IN_PROGRESS = FALSE;
-		//CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA,GPIO_OUT_DATA_OUT9,0);
 		gpioRegs->BANK_REGISTERS[0].OUT_DATA &= ~(1 << 9);
 	}
 	else  //if not, keep checking until it is
 		Clock_start(MB_End_Clock);
-    //	CSL_FINS(gpioRegs->BANK_REGISTERS[0].OUT_DATA,GPIO_OUT_DATA_OUT9,0);
 }
 
 // search the integer registers
