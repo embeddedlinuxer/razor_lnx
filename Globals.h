@@ -29,21 +29,12 @@
 * FORCE_INIT_GLOBALS and run the software with the debugger. 
 * DO NOT create a boot image from the software if it has FORCE_INIT_GLOBALS defined!
 *-------------------------------------------------------------------------*/
-///////////////////////////////////////////////////////////////////////////
-// HISTORY  
-///////////////////////////////////////////////////////////////////////////
-// 
-// ver 1.02.09 | Jan-29-2021 | Daniel Koh | SHIPPED 8843, 8844, 8845, 8846
-// ver 1.02.10 | Mar-03-2021 | Daniel Koh | Changed logData, REG_STREAM upload fix 
-// ver 1.02.11 | Jun-01-2021 | Daniel Koh | la_offet added to 0x10 ModbusRTU.c
-//
-//
 
 #ifndef GLOBALS_H_
 #define GLOBALS_H_
 
 #define HARDWARE_VERSION		"1.1.1"
-#define FIRMWARE_VERSION 		"1.02.11"
+#define FIRMWARE_VERSION 		"1.02.13"
 
 #define BOOL Uint8
 #define DEMO_MODE

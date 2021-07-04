@@ -13,12 +13,18 @@
 *------------------------------------------------------------------------*/
 /*------------------------------------------------------------------------
 * Main.c
-*-------------------------------------------------------------------------
-* HISTORY:
-*      1.01.00 : Jun-24-2020 : Daniel Koh : Added usb logging error checking 
-*------------------------------------------------------------------------*/
+///////////////////////////////////////////////////////////////////////////
+// HISTORY
+///////////////////////////////////////////////////////////////////////////
+// ver 1.02.09 | Jan-29-2021 | Daniel Koh | SHIPPED 8843, 8844, 8845, 8846
+// ver 1.02.10 | Mar-03-2021 | Daniel Koh | Changed logData, REG_STREAM upload fix
+// ver 1.02.11 | Jun-01-2021 | Daniel Koh | la_offet added to 0x10 ModbusRTU.c
+// ver 1.02.12 | Jun-01-2021 | Daniel Koh | la_offet added to 0x10 ModbusRTU.c
+// ver 1.02.13 | Jul-06-2021 | Daniel Koh | completely replaced ancient-year-old sdk with the latest sdk 
+//
 
 #undef MENU_H_
+
 #include <ti/board/board.h>
 #include <ti/csl/csl_tmrAux.h>
 #include "stdio.h"
@@ -30,7 +36,6 @@
 #include "device_nand.h"
 #include "util.h" 
 #include "Globals.h"
-//#include "device.h"
 
 #define NANDWIDTH_16
 #define C6748_LCDK
