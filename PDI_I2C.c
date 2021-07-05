@@ -40,6 +40,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 #undef MENU_H
+
 #include <ti/csl/cslr_i2c.h>
 #include <ti/csl/cslr_gpio.h>
 #include <ti/csl/csl_gpioAux.h>
@@ -100,25 +101,25 @@ static inline Uint8 I2C_Wait_For_TXRDY(void)
    
 unsigned char Bcd2Hex(unsigned char BCDValue)   
 {   
-  unsigned char temp;   
-  unsigned char HexVal;   
-  temp = BCDValue;   
-  HexVal = 0;   
-  while(1)   
-  {   
-    /// Get the tens digit by doing multiple subtraction of 10 from the binary value. 
-    if(temp >= 10)   
-    {   
-      temp -= 10;   
-      HexVal += 0x10;   
-    }   
-    else // Get the ones digit by adding the remainder.   
-    {   
-      HexVal += temp;   
-      break;   
-    }   
-  }   
-  return(HexVal);   
+	unsigned char temp;   
+	unsigned char HexVal;   
+	temp = BCDValue;   
+	HexVal = 0;   
+	while(1)   
+	{   
+    	/// Get the tens digit by doing multiple subtraction of 10 from the binary value. 
+    	if (temp >= 10)   
+    	{   
+      		temp -= 10;   
+      		HexVal += 0x10;   
+    	}   
+    	else // Get the ones digit by adding the remainder.   
+    	{   
+      		HexVal += temp;   
+      		break;   
+    	}   
+  	}   
+  	return(HexVal);   
 }   
    
 //******************************************************************************   
@@ -139,6 +140,7 @@ unsigned char Hex2Bcd(unsigned char HexVal)
     temp >>= 1;   
     // Isolate the bits for the upper digit.   
     temp &= 0x78;   
+
     return(temp + (temp >> 2) + (HexVal & 0x0f));   
 }  
 
@@ -197,6 +199,7 @@ void Init_I2C(void)
 
 	Hwi_enableInterrupt(6);
 }
+
 
 // Basically identical to Init_I2C but we leave the TX buffer alone
 void Reset_I2C(Uint8 isKey, Uint32 I2C_KEY)
@@ -340,14 +343,7 @@ int I2C_Recover(void)
 void Init_LCD(void)
 {
 	int i;
-	char trans_val[I2C_INIT_NUM_CHARS]={LCD_FUNC_SET,LCD_FUNC_SET,LCD_DISP_ON,
-			LCD_DISP_CLR,LCD_ENTRY_MODE,LCD_SET_DDRAM_ADDR};
-
-	// configure GPIO0_7 (GPIO0_7_PIN) as an output
-	CSL_FINS(gpioRegs->BANK_REGISTERS[4].DIR,GPIO_DIR_DIR7,0);
-
-	// turn on backlight
-	I2C_BACKLIGHT_EN = TRUE; 
+	char trans_val[I2C_INIT_NUM_CHARS]={LCD_FUNC_SET,LCD_FUNC_SET,LCD_DISP_ON,LCD_DISP_CLR,LCD_ENTRY_MODE,LCD_SET_DDRAM_ADDR};
 
 	for(i=0; i<(sizeof(trans_val)/sizeof(trans_val[0])); i++)
 	{
@@ -356,13 +352,10 @@ void Init_LCD(void)
 	}
 
 	LCD_setcursor(0, 0); //turn off cursor
-	Clock_start(I2C_LCD_Clock);
-	Clock_start(I2C_Start_Pulse_MBVE_Clock);
-	Clock_start(Process_Menu_Clock);
-
-	Semaphore_post(Menu_sem);
+	I2C_BACKLIGHT_EN = TRUE; // turn on backlight
 	LCD_IS_INIT = TRUE;
 }
+
 
 void Init_MBVE(void)
 {
@@ -374,12 +367,11 @@ void Init_MBVE(void)
 
 	I2C_STT_CLR;
 	I2C_STP_SET;
-
 	I2C_Wait_For_Stop();
 
 	i2cRegs->ICSAR 	= CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_MBVE); 	//Set Slave Address to 0x21
-	CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICXRDY,ENABLE); 	//unmask the ICRRDY interrupt
 
+	I2C_XRDY_SET; // mask the ICXRDY interrupt
 	I2C_RM_OFF;
 	I2C_STP_SET;
 	I2C_MST_MODE;
@@ -394,20 +386,21 @@ void Init_MBVE(void)
 	I2C_Wait_For_TXRDY();	//poll transmitter ready
 	i2cRegs->ICDXR = 0x00;
 	I2C_Wait_For_TXRDY();	//poll transmitter ready
-	CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,DISABLE); //mask the ICRRDY interrupt
+	I2C_RRDY_CLR; // unmask the ICRRDY interrupt
 	i2cRegs->ICSAR = CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_XPANDR); 	//Set slave address to 0x20
 	I2C_STP_CLR;
-	I2C_RM_ON;	// enable repeated start mode
+	I2C_RM_ON;
 
-	//enable interrupts on GPIO banks 6 and 8
+	/// enable interrupts on GPIO banks 6 and 8
 	CSL_GPIO_bankInterruptEnable(gpioRegs,3); 
 	CSL_GPIO_bankInterruptEnable(gpioRegs,6);
 	CSL_GPIO_bankInterruptEnable(gpioRegs,8);
 
-	gpioRegs->BANK_REGISTERS[2].SET_FAL_TRIG |=  1 << 1; 
-	gpioRegs->BANK_REGISTERS[2].SET_RIS_TRIG |=  1 << 1; 
-	gpioRegs->BANK_REGISTERS[1].SET_FAL_TRIG |=  1 << 29;
-	gpioRegs->BANK_REGISTERS[1].SET_RIS_TRIG |=  1 << 29;
+	//gpioRegs->BANK_REGISTERS[2].SET_FAL_TRIG |= 1 << 1; 
+	//gpioRegs->BANK_REGISTERS[2].SET_RIS_TRIG |= 1 << 1; 
+
+	/// enable button interrupts		
+	EnableButtonInts();
 }
 
 /***************************************************************************
@@ -420,11 +413,10 @@ void Init_MBVE(void)
  ***************************************************************************/
 int LCD_printch(char c, int column, int line)
 {
-	//set address
-	if(LCD_setaddr(column,line))
-		return ERROR_VAL; //return if column or line value is OOB
-
-	//write character to address
+	/// set address
+	if (LCD_setaddr(column,line)) return ERROR_VAL; //return if column or line value is OOB
+		
+	/// write character to address
 	Pulse_ePin(0,1,c);
 
 	return 0;
@@ -439,20 +431,20 @@ int LCD_printch(char c, int column, int line)
 int LCD_setaddr(int column, int line)
 {
 	Uint8 lcd_addr = 0x00;
-	//check bounds
-	if ((column >= 16) || (column < 0))
-		return ERROR_VAL; //columns OOB
-	if ((line >= 2) || (line < 0))
-		return ERROR_VAL; //rows OOB
 
-	if (line == 1) //if 2nd line
-		lcd_addr = 0x40;
+	/// check bounds
+	if ((column >= 16) || (column < 0)) return ERROR_VAL; //columns OOB
+	if ((line >= 2) || (line < 0)) return ERROR_VAL; //rows OOB
+		
+	/// if 2nd line
+	if (line == 1) lcd_addr = 0x40;
 
 	lcd_addr |= (Uint8)column;
-	lcd_addr |= 0x80; //MSb is always SET for address write
+	lcd_addr |= 0x80; // MSb is always SET for address write
 
-	//set the DDRAM address
+	/// set the DDRAM address
 	Pulse_ePin(0,0,lcd_addr);
+
 	return 0;
 }
 
@@ -538,7 +530,7 @@ void LCD_setcursor(int curs_on, int curs_blink)
 		MENU.curStat = LCD_CURS_OFF | LCD_CURS_NOBLINK;
 
 	Pulse_ePin(0,0,lcd_data);
-	Pulse_ePin(0,0,lcd_data);
+	//Pulse_ePin(0,0,lcd_data); redundant
 	Swi_restore(key);
 }
 
@@ -556,15 +548,11 @@ static inline void Pulse_ePin(int read, int write, Uint8 lcd_data)
 	Uint8 MSB_eON;
 	Uint16 key;
 
-	if (read == write) // if both are zero (or one) -> instruction command
-		MSB_eOFF = 0x00;
-	else if (read == 1) //read command
-		MSB_eOFF = 0x03;
-	else if (write == 1) // write command
-		MSB_eOFF = 0x01;
-	else
-		return; // improper parameter values - must be 0 or 1
-
+	if (read == write) MSB_eOFF = 0x00; // if both are zero (or one) -> instruction command
+	else if (read == 1) MSB_eOFF = 0x03; // read command
+	else if (write == 1) MSB_eOFF = 0x01; // write command
+	else return; // improper parameter values - must be 0 or 1
+		
 	MSB_eON = MSB_eOFF | 0x04; // Add the E pin
 
 	key = Swi_disable();
@@ -573,7 +561,7 @@ static inline void Pulse_ePin(int read, int write, Uint8 lcd_data)
 	I2C_SendByte(lcd_data);
 	I2C_SendByte(MSB_eOFF);
 
-	//E Pin On
+	// E Pin On
 	I2C_SendByte(lcd_data);
 	I2C_SendByte(MSB_eON);
 
@@ -583,6 +571,7 @@ static inline void Pulse_ePin(int read, int write, Uint8 lcd_data)
 
 	Swi_restore(key);
 }
+
 
 /*****************************************************************************
  * Pulse_ePin_Manual() - Turn E Pin On and Off again manually
@@ -596,17 +585,12 @@ static inline void Pulse_ePin_Manual(int read, int write, Uint8 lcd_data)
 	volatile Uint8 MSB_eON;
 	Uint32 key;
 
-	if (read == write) // if both are zero (or one) -> instruction command
-		MSB_eOFF = 0x00;
-	else if (read == 1) //read command
-		MSB_eOFF = 0x03;
-	else if (write == 1) // write command
-		MSB_eOFF = 0x01;
-	else
-		return; // improper parameter values - must be 0 or 1
+	if (read == write) MSB_eOFF = 0x00;// if both are zero (or one) -> instruction command
+	else if (read == 1) MSB_eOFF = 0x03;//read command
+	else if (write == 1) MSB_eOFF = 0x01;// write command
+	else return; // improper parameter values - must be 0 or 1
 
-	if (I2C_BACKLIGHT_EN) // enable backlight if we need it
-		MSB_eOFF |= 0x08;
+	if (I2C_BACKLIGHT_EN) MSB_eOFF |= 0x08;// enable backlight if we need it
 
 	MSB_eON = MSB_eOFF | 0x04; // Add the E pin
 
@@ -652,7 +636,7 @@ void I2C_LCD_ClockFxn(void)
 	if ( (I2C_TXBUF.n > 0) )
 	{
 		Swi_post(Swi_I2C_TX); //if THR is ready then start sending now
-		CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICXRDY,ENABLE); //unmask icxrdy interrupt
+		I2C_XRDY_SET;
 	}
 }
 
@@ -660,15 +644,15 @@ void I2C_LCD_ClockFxn(void)
 inline void DisableButtonInts(void)
 {
 	// clear fall/rise triggers GPIO3[13]
-	gpioRegs->BANK_REGISTERS[1].CLR_FAL_TRIG |=  1 << 29; 
-	gpioRegs->BANK_REGISTERS[1].CLR_RIS_TRIG |=  1 << 29;
+	gpioRegs->BANK_REGISTERS[1].CLR_FAL_TRIG |= 1 << 29; 
+	gpioRegs->BANK_REGISTERS[1].CLR_RIS_TRIG |= 1 << 29;
 }
 
 inline void EnableButtonInts(void)
 {
     // set fall/rise triggers GPIO3[13]
-	gpioRegs->BANK_REGISTERS[1].SET_FAL_TRIG |=  1 << 29;
-	gpioRegs->BANK_REGISTERS[1].SET_RIS_TRIG |=  1 << 29;
+	gpioRegs->BANK_REGISTERS[1].SET_FAL_TRIG |= 1 << 29;
+	gpioRegs->BANK_REGISTERS[1].SET_RIS_TRIG |= 1 << 29;
 }
 
 /***************************************************************************
@@ -713,7 +697,7 @@ void I2C_Start_Pulse_MBVE(void)
 		I2C_Wait_For_Stop();
 
 		i2cRegs->ICSAR 	= CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_MBVE); 	//Set Slave Address to 0x21
-		CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,ENABLE); 	//unmask the ICRRDY interrupt
+		I2C_RRDY_SET; //unmask the ICRRDY interrupt
 
 		I2C_RM_OFF;
 		I2C_STP_SET;
@@ -731,7 +715,7 @@ void I2C_Start_Pulse_MBVE(void)
 		I2C_Wait_To_Send();
 		i2cRegs->ICDXR = msb;
 
-		CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,DISABLE); //mask the ICRRDY interrupt
+		I2C_RRDY_CLR; //mask the ICRRDY interrupt
 		i2cRegs->ICSAR = CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_XPANDR); 	//Set slave address to 0x20
 		I2C_STP_CLR;
 		I2C_RM_ON;	// enable repeated start mode
@@ -879,7 +863,7 @@ void I2C_Pulse_MBVE(void)
 	I2C_STP_SET;
 	I2C_Wait_For_Stop();
 	i2cRegs->ICSAR 	= CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_MBVE); 	//Set Slave Address to 0x21
-	CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,ENABLE); 	//unmask the ICRRDY interrupt
+	I2C_RRDY_SET; //unmask the ICRRDY interrupt
 	I2C_RM_OFF;
 	I2C_STP_SET;
 	I2C_MST_MODE;
@@ -899,7 +883,7 @@ void I2C_Pulse_MBVE(void)
         }
 	}
 
-	CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,DISABLE); //mask the ICRRDY interrupt
+	I2C_RRDY_CLR; //mask the ICRRDY interrupt
 	i2cRegs->ICSAR = CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_XPANDR); 	//Set slave address to 0x20
 	I2C_STP_CLR;
 	I2C_RM_ON;	// enable repeated start mode
@@ -984,7 +968,7 @@ void I2C_TX_Fxn(void)
 
 	if (I2C_TXBUF.n <= 0)
 	{
-		CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICXRDY,DISABLE); //mask icxrdy interrupt
+		I2C_XRDY_CLR;
 		I2C_TXBUF.n = 0;
 
 		I2C_TXBUF.tail = I2C_TXBUF.head;
@@ -995,7 +979,7 @@ void I2C_TX_Fxn(void)
 	}
 
 	key = Swi_disable();
-	CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICXRDY,DISABLE); //mask icxrdy interrupt
+	I2C_XRDY_CLR;
 	I2C_FINISHED_TX = FALSE;
 	while(I2C_TXBUF.n > 0)
 	{ // data is available from the buffer
@@ -1003,7 +987,7 @@ void I2C_TX_Fxn(void)
 		{
 			i2c_byte = BfrGet(&I2C_TXBUF);
 			i2cRegs->ICDXR = i2c_byte;
-			CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICXRDY,ENABLE); //unmask the ICXRDY interrupt
+			I2C_XRDY_SET;
 		}
 		else
 		{
@@ -1012,7 +996,8 @@ void I2C_TX_Fxn(void)
 			I2C_TXBUF.n = 0;
 		}
 	}
-	CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICXRDY,ENABLE); 	//unmask the ICRRDY interrupt
+
+	I2C_XRDY_SET; //unmask the ICRRDY interrupt
 	I2C_FINISHED_TX = TRUE;
 	if (I2C_TXBUF.n < 0)
 	{
@@ -1097,6 +1082,8 @@ static inline int I2C_Wait_To_Send_ARDY(void)
 
 	return timeout;
 }
+
+
 static inline int I2C_Wait_To_Receive(void)
 {
     int count = 0; 
@@ -1106,6 +1093,7 @@ static inline int I2C_Wait_To_Receive(void)
         count++;
         if (count > I2C_DELAY_TIME) return 1;
     }    
+
     return 0; // success
 }
 
@@ -1137,7 +1125,7 @@ static inline int I2C_Wait_For_Stop(void)
 		}
 	}
 
-	I2C_MST_MODE; // I2C module switches to slave mode after every STOP condition
+	I2C_MST_MODE; // I2C module switches to master mode after every STOP condition
 	return 0; // SUCCESS
 }
 
@@ -1829,7 +1817,6 @@ void I2C_DS1340_Write(int RTC_ADDR, int RTC_DATA)
 
 void I2C_Update_AO(void)
 {
-
 	if(I2C_TXBUF.n > 0)
     {
         Clock_start(I2C_Update_AO_Clock_Retry);
@@ -1845,7 +1832,7 @@ void I2C_Update_AO(void)
     Uint16 ctrl_byte;
     Uint8 is_missing_DAC;
 
-    //I2C_STT_CLR;
+    I2C_STT_CLR;
     I2C_STP_SET;
     I2C_Wait_For_Stop();
     key = Swi_disable();
@@ -1879,32 +1866,28 @@ void I2C_Update_AO(void)
 	// is active error && alarm notificaion enabled?
     if ((DIAGNOSTICS > 0) && (REG_AO_ALARM_MODE > 0))
     {
-        if (REG_AO_ALARM_MODE == 1)
-            percent_val = ((REG_AO_URV.calc_val-REG_AO_LRV.calc_val)*(ALM_HI-4))/(16*100);
-        else if (REG_AO_ALARM_MODE == 2)
-            percent_val = ((REG_AO_URV.calc_val-REG_AO_LRV.calc_val)*(ALM_LO-4))/(16*100);
+        if (REG_AO_ALARM_MODE == 1) percent_val = ((REG_AO_URV.calc_val-REG_AO_LRV.calc_val)*(ALM_HI-4))/(16*100);
+        else if (REG_AO_ALARM_MODE == 2) percent_val = ((REG_AO_URV.calc_val-REG_AO_LRV.calc_val)*(ALM_LO-4))/(16*100);
     }
     else
     {
-        if (REG_AO_MODE == 2)   // manual mode
-            percent_val = ((REG_AO_URV.calc_val-REG_AO_LRV.calc_val)*(REG_AO_MANUAL_VAL-4))/(16*100);
-        else                    // automatic or reverse
-            percent_val = (REG_WATERCUT.calc_val-REG_AO_LRV.calc_val)/(REG_AO_URV.calc_val-REG_AO_LRV.calc_val);
+		if (REG_AO_MODE == 2) percent_val = ((REG_AO_URV.calc_val-REG_AO_LRV.calc_val)*(REG_AO_MANUAL_VAL-4))/(16*100); // manual mode
+
+		else percent_val = (REG_WATERCUT.calc_val-REG_AO_LRV.calc_val)/(REG_AO_URV.calc_val-REG_AO_LRV.calc_val); // automatic or reverse
+
     }
 
-    // is reverse mode?    
-    if (REG_AO_MODE == 1)
-        out_data = ((dmax-dmin)*(1.0-percent_val)) + dmin;
-    else
-        out_data = ((dmax-dmin)*percent_val) + dmin;
-
+    /// is reverse mode?    
+    if (REG_AO_MODE == 1) out_data = ((dmax-dmin)*(1.0-percent_val)) + dmin;
+    else out_data = ((dmax-dmin)*percent_val) + dmin;
+        
     /// set Slave Address ////////////////////////////////////////
     i2cRegs->ICSAR = CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_DAC);
     //////////////////////////////////////////////////////////////  
 
     // write to DAC
     I2C_MST_MODE;
-    CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,DISABLE); //mask the ICRRDY interrupt
+	I2C_RRDY_CLR; //mask the ICRRDY interrupt
     I2C_STT_CLR;
     I2C_RM_OFF;
     I2C_STP_SET;
@@ -1957,7 +1940,7 @@ while(CSL_FEXT(i2cRegs->ICIVR, I2C_ICIVR_INTCODE) != CSL_I2C_ICIVR_INTCODE_NONE)
         ///////////// Read back the DAC value and control byte (disabled)//////////////
         I2C_RX_MODE;    //put I2C in RX mode
         I2C_CNT_3BYTE;
-        CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,ENABLE); // ICRRDY interrupt
+		I2C_RRDY_SET; //unmask the ICRRDY interrupt
         while(CSL_FEXT(i2cRegs->ICIVR, I2C_ICIVR_INTCODE) != CSL_I2C_ICIVR_INTCODE_NONE); //read ICIVR until it's cleared of all flags
         I2C_STP_SET;
         I2C_STT_SET;
@@ -1974,10 +1957,11 @@ while(CSL_FEXT(i2cRegs->ICIVR, I2C_ICIVR_INTCODE) != CSL_I2C_ICIVR_INTCODE_NONE)
 
     I2C_TX_MODE; // put I2C back in TX mode
     I2C_MST_MODE;
-    CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,DISABLE); // mask the ICRRDY interrupt
+	I2C_RRDY_CLR; // mask ICRRDY
     i2cRegs->ICSAR = CSL_FMK(I2C_ICSAR_SADDR,I2C_SLAVE_ADDR_XPANDR); // set slave address to 0x20
 	I2C_STP_CLR;
     I2C_RM_ON; // enable repeated start mode
+
     Swi_restore(key);
 
     /// START NEXT I2C CLOCK
@@ -2156,8 +2140,8 @@ setStart(void)
 void
 setTx(void)
 {
-	CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,DISABLE); //mask the ICRRDY interrupt
-   	I2C_TX_MODE; // I2C in TX MODE
+	I2C_RRDY_CLR; 
+   	I2C_TX_MODE; 
 	I2C_RM_ON;
 	I2C_MST_MODE;
 }
@@ -2165,8 +2149,8 @@ setTx(void)
 void
 setRx(void)
 {
-    CSL_FINST(i2cRegs->ICIMR,I2C_ICIMR_ICRRDY,ENABLE); // unmask the ICRRDY interrupt
-	I2C_RX_MODE; // I2C in RX mode 
+	I2C_RRDY_SET;
+	I2C_RX_MODE; 
 	I2C_RM_OFF;
 	I2C_MST_MODE;
 }

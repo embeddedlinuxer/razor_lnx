@@ -177,6 +177,9 @@ static inline void startClocks(void)
 {
 	Clock_start(Update_Relays_Clock);
 	Clock_start(Capture_Sample_Clock);
+    Clock_start(I2C_LCD_Clock);
+    Clock_start(I2C_Start_Pulse_MBVE_Clock);
+    Clock_start(Process_Menu_Clock);
 }
 
 static inline void Init_Counter_3(void)

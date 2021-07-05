@@ -39,17 +39,6 @@
 /*                             MACRO DEFINITIONS                              */
 /*============================================================================*/
 
-/// This wasn't included in cslr_gpio.h for some reason
-#define CSL_GPIO_BINTEN_EN8_MASK         (0x00000100u)
-#define CSL_GPIO_BINTEN_EN8_SHIFT        (0x00000008u)
-#define CSL_GPIO_BINTEN_EN8_DISABLE      (0x00000000u)
-#define CSL_GPIO_BINTEN_EN8_ENABLE       (0x00000001u)
-
-#define CSL_GPIO_DIR_DIR7_MASK           (0x00000080u)
-#define CSL_GPIO_DIR_DIR7_SHIFT          (0x00000007u)
-#define CSL_GPIO_DIR_DIR7_RESETVAL       (0x00000001u)
-///
-
 #define I2C_SLAVE_ADDR_WRITE	(0x40)
 #define I2C_SLAVE_ADDR_READ		(0x41)
 #define I2C_SLAVE_ADDR_XPANDR	(0x20)	// LCD expander
@@ -88,13 +77,19 @@
 
 #define I2C_INIT_NUM_CHARS      (6)
 
-#define I2C_STT_SET       	i2cRegs->ICMDR |= CSL_I2C_ICMDR_STT_MASK;
-#define I2C_STT_CLR			i2cRegs->ICMDR &= ~CSL_I2C_ICMDR_STT_MASK;
-#define I2C_STP_SET 		i2cRegs->ICMDR |= CSL_I2C_ICMDR_STP_MASK;
-#define I2C_STP_CLR			i2cRegs->ICMDR &= ~CSL_I2C_ICMDR_STP_MASK;
+#define I2C_RRDY_SET		i2cRegs->ICIMR |= CSL_I2C_ICIMR_ICRRDY_MASK
+#define I2C_RRDY_CLR		i2cRegs->ICIMR &= ~CSL_I2C_ICIMR_ICRRDY_MASK
 
-#define I2C_RX_MODE			i2cRegs->ICMDR &= ~CSL_I2C_ICMDR_TRX_MASK;
-#define I2C_TX_MODE			i2cRegs->ICMDR |= CSL_I2C_ICMDR_TRX_MASK;
+#define I2C_XRDY_SET		i2cRegs->ICIMR |= CSL_I2C_ICIMR_ICXRDY_MASK
+#define I2C_XRDY_CLR		i2cRegs->ICIMR &= ~CSL_I2C_ICIMR_ICXRDY_MASK
+
+#define I2C_STT_SET       	i2cRegs->ICMDR |= CSL_I2C_ICMDR_STT_MASK
+#define I2C_STT_CLR			i2cRegs->ICMDR &= ~CSL_I2C_ICMDR_STT_MASK
+#define I2C_STP_SET 		i2cRegs->ICMDR |= CSL_I2C_ICMDR_STP_MASK
+#define I2C_STP_CLR			i2cRegs->ICMDR &= ~CSL_I2C_ICMDR_STP_MASK
+
+#define I2C_RX_MODE			i2cRegs->ICMDR &= ~CSL_I2C_ICMDR_TRX_MASK
+#define I2C_TX_MODE			i2cRegs->ICMDR |= CSL_I2C_ICMDR_TRX_MASK
 
 #define I2C_RM_ON			i2cRegs->ICMDR |= CSL_I2C_ICMDR_RM_MASK 
 #define I2C_RM_OFF			i2cRegs->ICMDR &= ~CSL_I2C_ICMDR_RM_MASK 
