@@ -152,7 +152,6 @@ void Init_I2C(void)
 {
 	int i;
 	Hwi_disableInterrupt(6);
-	LCD_IS_INIT = FALSE;
 	I2C_RESET_SET;
 	i2cRegs->ICSTR = CSL_I2C_ICSTR_RESETVAL;
 
@@ -246,7 +245,6 @@ void Reset_I2C(Uint8 isKey, Uint32 I2C_KEY)
 	Clock_stop(I2C_Update_AO_Clock_Retry);
 	Clock_stop(I2C_Update_AO_Clock);
 
-	LCD_IS_INIT = FALSE;
 	I2C_RESET_SET;
 	i2cRegs->ICSTR = CSL_I2C_ICSTR_RESETVAL;
 
@@ -343,17 +341,27 @@ int I2C_Recover(void)
 void Init_LCD(void)
 {
 	int i;
-	char trans_val[I2C_INIT_NUM_CHARS]={LCD_FUNC_SET,LCD_FUNC_SET,LCD_DISP_ON,LCD_DISP_CLR,LCD_ENTRY_MODE,LCD_SET_DDRAM_ADDR};
+    char trans_val[I2C_INIT_NUM_CHARS]={LCD_FUNC_SET,LCD_FUNC_SET,LCD_DISP_ON,
+            LCD_DISP_CLR,LCD_ENTRY_MODE,LCD_SET_DDRAM_ADDR};
 
-	for(i=0; i<(sizeof(trans_val)/sizeof(trans_val[0])); i++)
-	{
-		Pulse_ePin_Manual(0,0,trans_val[i]);
-		delayInt(0xFFFF); // wait for LCD to finish instruction
-	}
+    // configure GPIO0_7 (GPIO0_7_PIN) as an output
+    //CSL_FINS(gpioRegs->BANK[4].DIR,GPIO_DIR_DIR7,0);
 
-	LCD_setcursor(0, 0); //turn off cursor
-	I2C_BACKLIGHT_EN = TRUE; // turn on backlight
-	LCD_IS_INIT = TRUE;
+    // turn on backlight
+    I2C_BACKLIGHT_EN = TRUE;
+
+    for(i=0; i<(sizeof(trans_val)/sizeof(trans_val[0])); i++)
+    {
+        Pulse_ePin_Manual(0,0,trans_val[i]);
+        delayInt(0xFFFF); // wait for LCD to finish instruction
+    }
+
+    LCD_setcursor(0, 0); //turn off cursor
+    Clock_start(I2C_LCD_Clock);
+    Clock_start(I2C_Start_Pulse_MBVE_Clock);
+    Clock_start(Process_Menu_Clock);
+
+    Semaphore_post(Menu_sem);
 }
 
 
@@ -396,8 +404,8 @@ void Init_MBVE(void)
 	CSL_GPIO_bankInterruptEnable(gpioRegs,6);
 	CSL_GPIO_bankInterruptEnable(gpioRegs,8);
 
-	//gpioRegs->BANK_REGISTERS[2].SET_FAL_TRIG |= 1 << 1; 
-	//gpioRegs->BANK_REGISTERS[2].SET_RIS_TRIG |= 1 << 1; 
+	gpioRegs->BANK_REGISTERS[2].SET_FAL_TRIG |= 1 << 1; 
+	gpioRegs->BANK_REGISTERS[2].SET_RIS_TRIG |= 1 << 1; 
 
 	/// enable button interrupts		
 	EnableButtonInts();
@@ -530,7 +538,6 @@ void LCD_setcursor(int curs_on, int curs_blink)
 		MENU.curStat = LCD_CURS_OFF | LCD_CURS_NOBLINK;
 
 	Pulse_ePin(0,0,lcd_data);
-	//Pulse_ePin(0,0,lcd_data); redundant
 	Swi_restore(key);
 }
 
