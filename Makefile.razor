@@ -1,0 +1,104 @@
+VER = 1.2.13
+
+
+##############################################
+##############################################
+### BUGFIXES AND CHANGES 
+##############################################
+##############################################
+
+define BUGS
+
+Modifiled lcdLine1[MAX_LCD_WIDTH] to lcdLine1[MAX_LCD_WIDTH+1]
+Replaced mcsdk_1_01_00_02 with pdk_omapl138_1_0_11
+
+
+endef
+
+##############################################
+##############################################
+### DO NOT CHANGE ANYTHING AFTER THIS LINE ###
+##############################################
+##############################################
+export BUGS
+PRODUCT = RAZOR
+TIME_STAMP = `date +'%m%d%Y'`
+VER2 = $(subst .,_,$(VER))
+RELEASE_DATE = $(shell date --iso=seconds)
+MD5SUM = md5sum
+ZIP = zip
+MKDIR = mkdir
+ECHO = echo
+TAR = tar
+RM = rm
+CP = cp
+MV = mv
+CP_OPTIONS = -r
+RM_OPTIONS = -rf 
+TAR_OPTIONS = -zcvf 
+
+RELEASE_FOLDER = $(PRODUCT)_$(VER2)_$(TIME_STAMP)
+ZIPPED_FOLDER = $(RELEASE_FOLDER).zip
+MD5_FILES = pdi_razor_firmware.ais PDI_Razor.out PDI_Razor.bin  PDI_Razor.map
+CUSTOMER_FILES = $(MD5_FILES) Makefile.razor boot.cfg
+RELEASE_NOTE_FILE= RELEASE_NOTE.txt
+
+CLEAN_THESE = *.zip *.txt RAZOR_*
+
+LINE0 = "-----------------------------------------------------"
+LINE1 = "RELEASE SUMMARY"
+LINE2 = "-----------------------------------------------------"
+LINE3 = "PRODUCT      : $(PRODUCT)"
+LINE4 = "VERSION      : $(VER)"
+LINE5 = "RELEASE DATE : $(RELEASE_DATE)"
+LINE6 = "-----------------------------------------------------"
+LINE7 = "-----------------------------------------------------"
+LINE8 = "BUGFIXES & CHANGES"
+LINE9 = "-----------------------------------------------------"
+LINE10 = "-----------------------------------------------------"
+LINE11 = "MD5 HASHES"
+LINE12 = "-----------------------------------------------------"
+
+define abc
+test.
+tset.
+endef
+export abc
+all	: clean create_dirs md5hash copy_files compress 
+
+create_dirs:
+	$(MKDIR) -p $(RELEASE_FOLDER)/support
+
+copy_files:
+	$(CP) $(CUSTOMER_FILES) $(RELEASE_FOLDER)/support
+	$(CP) pdi_razor_firmware.ais RELEASE_NOTE.txt $(RELEASE_FOLDER)
+	
+compress:
+	$(ZIP) $(ZIPPED_FOLDER) $(RELEASE_FOLDER)
+	$(MV) $(ZIPPED_FOLDER) $(RELEASE_FOLDER)/support
+
+md5hash	:
+	@$(ECHO) $(LINE0) >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) $(LINE1) >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) $(LINE2) >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) $(LINE3) >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) $(LINE4) >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) $(LINE5) >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) $(LINE6) >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) "" 		 >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) "" 		 >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) "" 		 >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) $(LINE7) >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) $(LINE8) >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) $(LINE9) >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) "$$BUGS" >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) "" 		 >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) "" 		 >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) "" 		 >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) $(LINE10) >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) $(LINE11) >> $(RELEASE_NOTE_FILE)
+	@$(ECHO) $(LINE12) >> $(RELEASE_NOTE_FILE)
+	$(MD5SUM) $(MD5_FILES) >> $(RELEASE_NOTE_FILE)
+
+clean:
+	@$(RM) $(RM_OPTIONS) $(CLEAN_THESE)
